@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search, Tags } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Input, Select } from "@/components/ui/Input";
 import { formatRupiah } from "@/lib/utils/currency";
 import type { Category, ItemType, Product } from "@/lib/types";
 import { ProductFormModal } from "@/components/produk/ProductFormModal";
@@ -27,6 +27,7 @@ export function ProdukScreen({ initialProducts, initialCategories }: Props) {
   const [products, setProducts] = useState(initialProducts);
   const [categories, setCategories] = useState(initialCategories);
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<ItemType | "all">("all");
   const [formOpen, setFormOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -35,11 +36,12 @@ export function ProdukScreen({ initialProducts, initialCategories }: Props) {
     () =>
       products.filter(
         (p) =>
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          (p.sku ?? "").toLowerCase().includes(search.toLowerCase()) ||
-          (p.barcode ?? "").includes(search)
+          (typeFilter === "all" || p.item_type === typeFilter) &&
+          (p.name.toLowerCase().includes(search.toLowerCase()) ||
+            (p.sku ?? "").toLowerCase().includes(search.toLowerCase()) ||
+            (p.barcode ?? "").includes(search))
       ),
-    [products, search]
+    [products, search, typeFilter]
   );
 
   async function refresh() {
@@ -83,14 +85,28 @@ export function ProdukScreen({ initialProducts, initialCategories }: Props) {
         </div>
       </div>
 
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-        <Input
-          className="max-w-sm pl-10"
-          placeholder="Cari produk..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="mb-4 flex flex-wrap gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Input
+            className="pl-10"
+            placeholder="Cari produk..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Select
+          className="w-auto"
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as ItemType | "all")}
+        >
+          <option value="all">Semua Tipe Barang</option>
+          {(Object.keys(ITEM_TYPE_LABELS) as ItemType[]).map((t) => (
+            <option key={t} value={t}>
+              {ITEM_TYPE_LABELS[t]}
+            </option>
+          ))}
+        </Select>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
