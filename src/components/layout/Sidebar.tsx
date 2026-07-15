@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
@@ -12,9 +13,11 @@ import {
   LogOut,
   Store,
   History,
+  Printer,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Role } from "@/lib/types";
+import { PrinterConnectModal } from "@/components/layout/PrinterConnectModal";
 
 interface NavItem {
   href: string;
@@ -35,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [printerModalOpen, setPrinterModalOpen] = useState(false);
 
   const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
@@ -75,6 +79,13 @@ export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
               </Link>
             );
           })}
+          <button
+            onClick={() => setPrinterModalOpen(true)}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+          >
+            <Printer size={18} />
+            Sambungkan Printer
+          </button>
         </nav>
 
         <div className="border-t border-slate-100 px-3 py-4">
@@ -110,7 +121,16 @@ export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
             </Link>
           );
         })}
+        <button
+          onClick={() => setPrinterModalOpen(true)}
+          className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-slate-500"
+        >
+          <Printer size={20} />
+          Printer
+        </button>
       </nav>
+
+      <PrinterConnectModal open={printerModalOpen} onClose={() => setPrinterModalOpen(false)} />
     </>
   );
 }

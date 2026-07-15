@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import clsx from "clsx";
 import { Bluetooth, Usb, Printer, Wifi } from "lucide-react";
@@ -10,6 +10,7 @@ import { usePrinterStore, type PrinterMode } from "@/store/printer-store";
 import { connectBluetoothPrinter, disconnectBluetoothPrinter, isBluetoothSupported } from "@/lib/printer/bluetooth";
 import { connectUsbPrinter, disconnectUsbPrinter, isUsbSupported } from "@/lib/printer/usb";
 import { printReceipt } from "@/lib/printer/print";
+import { createClient } from "@/lib/supabase/client";
 import type { StoreSettings, Transaction } from "@/lib/types";
 
 const MODES: { key: PrinterMode; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
@@ -40,10 +41,26 @@ function buildDummyTransaction(): Transaction {
   };
 }
 
-export function PrinterSettings({ storeSettings }: { storeSettings: StoreSettings }) {
+/** Panel koneksi printer - dipakai di halaman Pengaturan (dengan storeSettings dari server)
+ * maupun di modal cepat yang bisa diakses semua peran (fetch storeSettings sendiri). */
+export function PrinterSettings({ storeSettings: initialStoreSettings }: { storeSettings?: StoreSettings }) {
   const printer = usePrinterStore();
   const [connecting, setConnecting] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(initialStoreSettings ?? null);
+
+  useEffect(() => {
+    if (initialStoreSettings) return;
+    const supabase = createClient();
+    supabase
+      .from("store_settings")
+      .select("*")
+      .eq("id", 1)
+      .single()
+      .then(({ data }) => {
+        if (data) setStoreSettings(data);
+      });
+  }, [initialStoreSettings]);
 
   async function handleSelectMode(mode: PrinterMode) {
     if (mode === "browser") {
@@ -94,6 +111,7 @@ export function PrinterSettings({ storeSettings }: { storeSettings: StoreSetting
   }
 
   async function handleTestPrint() {
+    if (!storeSettings) return;
     setTesting(true);
     try {
       await printReceipt(printer.mode, printer.columns, buildDummyTransaction(), storeSettings);
@@ -108,11 +126,12 @@ export function PrinterSettings({ storeSettings }: { storeSettings: StoreSetting
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
       <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
-        <Wifi size={16} /> Pengaturan Printer Struk
+        <Wifi size={16} /> Printer Struk
       </h2>
       <p className="mb-4 text-xs text-slate-500">
-        Printer thermal 58mm/80mm bisa disambungkan langsung via Bluetooth atau USB dari Chrome.
-        Jika tidak, gunakan mode Browser untuk cetak ke printer apa pun (atau simpan sebagai PDF).
+        Printer thermal ada di device masing-masing kasir, jadi sambungkan langsung dari device yang
+        dipakai. Pilih <strong>Thermal Bluetooth</strong> supaya struk langsung ngeprint ke kertas
+        thermal, bukan buka dialog Print/PDF.
       </p>
 
       <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -157,7 +176,7 @@ export function PrinterSettings({ storeSettings }: { storeSettings: StoreSetting
         </Select>
       </div>
 
-      <Button variant="secondary" onClick={handleTestPrint} disabled={testing}>
+      <Button variant="secondary" onClick={handleTestPrint} disabled={testing || !storeSettings}>
         {testing ? "Mencetak..." : "Cetak Struk Percobaan"}
       </Button>
     </div>
