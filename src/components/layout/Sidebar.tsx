@@ -104,7 +104,7 @@ export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
       </aside>
 
       {/* Bottom nav mobile */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto border-t border-slate-200 bg-white md:hidden">
         {items.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
@@ -112,7 +112,7 @@ export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
               key={item.href}
               href={item.href}
               className={clsx(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
+                "flex min-w-[64px] shrink-0 flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
                 active ? "text-blue-600" : "text-slate-500"
               )}
             >
@@ -123,7 +123,7 @@ export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
         })}
         <button
           onClick={() => setPrinterModalOpen(true)}
-          className="flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-slate-500"
+          className="flex min-w-[64px] shrink-0 flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium text-slate-500"
         >
           <Printer size={20} />
           Printer
