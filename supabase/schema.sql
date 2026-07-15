@@ -49,6 +49,7 @@ create table if not exists products (
   cost_price numeric(12,2) not null default 0,
   stock integer not null default 0,
   low_stock_threshold integer not null default 5,
+  item_type text not null default 'default' check (item_type in ('default','addon','paket')),
   image_url text,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),

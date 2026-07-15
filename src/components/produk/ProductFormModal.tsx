@@ -6,7 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Select } from "@/components/ui/Input";
-import type { Category, Product } from "@/lib/types";
+import type { Category, ItemType, Product } from "@/lib/types";
+
+const ITEM_TYPE_LABELS: Record<ItemType, string> = {
+  default: "Default",
+  addon: "Add On",
+  paket: "Paket",
+};
 
 interface Props {
   open: boolean;
@@ -50,6 +56,7 @@ function ProductForm({
     price: product ? String(product.price) : "",
     cost_price: product ? String(product.cost_price) : "",
     stock: product ? String(product.stock) : "0",
+    item_type: product?.item_type ?? ("default" as ItemType),
   }));
   const [saving, setSaving] = useState(false);
 
@@ -66,6 +73,7 @@ function ProductForm({
       price: Number(form.price) || 0,
       cost_price: Number(form.cost_price) || 0,
       stock: Number(form.stock) || 0,
+      item_type: form.item_type,
     };
 
     const { error } = product
@@ -144,6 +152,20 @@ function ProductForm({
             onChange={(e) => setForm((f) => ({ ...f, cost_price: e.target.value }))}
           />
         </div>
+      </div>
+
+      <div>
+        <Label>Tipe Barang</Label>
+        <Select
+          value={form.item_type}
+          onChange={(e) => setForm((f) => ({ ...f, item_type: e.target.value as ItemType }))}
+        >
+          {(Object.keys(ITEM_TYPE_LABELS) as ItemType[]).map((t) => (
+            <option key={t} value={t}>
+              {ITEM_TYPE_LABELS[t]}
+            </option>
+          ))}
+        </Select>
       </div>
 
       <div>

@@ -11,6 +11,7 @@ export type PaymentMethod =
   | "transfer"
   | "ewallet";
 export type TransactionStatus = "selesai" | "dibatalkan";
+export type ItemType = "default" | "addon" | "paket";
 
 export interface Branch {
   id: string;
@@ -47,6 +48,7 @@ export interface Product {
   cost_price: number;
   stock: number;
   low_stock_threshold: number;
+  item_type: ItemType;
   image_url: string | null;
   is_active: boolean;
   created_at: string;

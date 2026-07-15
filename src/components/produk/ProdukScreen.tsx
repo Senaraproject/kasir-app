@@ -7,9 +7,16 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatRupiah } from "@/lib/utils/currency";
-import type { Category, Product } from "@/lib/types";
+import type { Category, ItemType, Product } from "@/lib/types";
 import { ProductFormModal } from "@/components/produk/ProductFormModal";
 import { CategoryModal } from "@/components/produk/CategoryModal";
+import { Badge } from "@/components/ui/Badge";
+
+const ITEM_TYPE_LABELS: Record<ItemType, string> = {
+  default: "Default",
+  addon: "Add On",
+  paket: "Paket",
+};
 
 interface Props {
   initialProducts: Product[];
@@ -94,6 +101,7 @@ export function ProdukScreen({ initialProducts, initialCategories }: Props) {
               <th className="px-4 py-3">Kategori</th>
               <th className="px-4 py-3 text-right">Harga</th>
               <th className="px-4 py-3 text-right">Stok</th>
+              <th className="px-4 py-3">Tipe Barang</th>
               <th className="px-4 py-3 text-right">Aksi</th>
             </tr>
           </thead>
@@ -107,6 +115,11 @@ export function ProdukScreen({ initialProducts, initialCategories }: Props) {
                 <td className="px-4 py-3 text-slate-500">{product.category?.name ?? "-"}</td>
                 <td className="px-4 py-3 text-right font-medium">{formatRupiah(product.price)}</td>
                 <td className="px-4 py-3 text-right text-slate-600">{product.stock}</td>
+                <td className="px-4 py-3">
+                  <Badge tone={product.item_type === "addon" ? "amber" : product.item_type === "paket" ? "blue" : "slate"}>
+                    {ITEM_TYPE_LABELS[product.item_type]}
+                  </Badge>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
                     <button
@@ -132,7 +145,7 @@ export function ProdukScreen({ initialProducts, initialCategories }: Props) {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                   Tidak ada produk.
                 </td>
               </tr>
