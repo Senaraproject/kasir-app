@@ -27,8 +27,12 @@ async function findWritableCharacteristic(
   throw new Error("Tidak menemukan characteristic yang bisa ditulis pada printer ini.");
 }
 
-/** Minta user memilih printer Bluetooth (butuh interaksi/klik user, hanya jalan di Chrome Android/Desktop). */
-export async function connectBluetoothPrinter(): Promise<string> {
+/**
+ * Minta user memilih printer Bluetooth (butuh interaksi/klik user, hanya jalan di Chrome Android/Desktop).
+ * `showAll=true` menampilkan semua perangkat BLE di sekitar (gak difilter service UUID),
+ * berguna kalau printer gak muncul di pencarian normal karena UUID-nya gak dikenali.
+ */
+export async function connectBluetoothPrinter(showAll = false): Promise<string> {
   const bluetooth = navigator.bluetooth;
   if (!bluetooth) {
     throw new Error(
@@ -36,10 +40,14 @@ export async function connectBluetoothPrinter(): Promise<string> {
     );
   }
 
-  const device = await bluetooth.requestDevice({
-    filters: KNOWN_PRINTER_SERVICES.map((s) => ({ services: [s] })),
-    optionalServices: KNOWN_PRINTER_SERVICES,
-  });
+  const device = await bluetooth.requestDevice(
+    showAll
+      ? { acceptAllDevices: true, optionalServices: KNOWN_PRINTER_SERVICES }
+      : {
+          filters: KNOWN_PRINTER_SERVICES.map((s) => ({ services: [s] })),
+          optionalServices: KNOWN_PRINTER_SERVICES,
+        }
+  );
 
   const server = await device.gatt?.connect();
   if (!server) throw new Error("Gagal terhubung ke printer.");

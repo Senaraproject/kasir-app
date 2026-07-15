@@ -69,20 +69,7 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
     }
 
     if (mode === "bluetooth") {
-      if (!isBluetoothSupported()) {
-        toast.error("Web Bluetooth tidak didukung di browser ini. Gunakan Chrome di Android/Desktop.");
-        return;
-      }
-      setConnecting(true);
-      try {
-        const name = await connectBluetoothPrinter();
-        printer.setMode("bluetooth", name);
-        toast.success(`Terhubung ke ${name}`);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal terhubung ke printer.");
-      } finally {
-        setConnecting(false);
-      }
+      await handleConnectBluetooth(false);
       return;
     }
 
@@ -101,6 +88,23 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
       } finally {
         setConnecting(false);
       }
+    }
+  }
+
+  async function handleConnectBluetooth(showAll: boolean) {
+    if (!isBluetoothSupported()) {
+      toast.error("Web Bluetooth tidak didukung di browser ini. Gunakan Chrome di Android/Desktop.");
+      return;
+    }
+    setConnecting(true);
+    try {
+      const name = await connectBluetoothPrinter(showAll);
+      printer.setMode("bluetooth", name);
+      toast.success(`Terhubung ke ${name}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal terhubung ke printer.");
+    } finally {
+      setConnecting(false);
     }
   }
 
@@ -131,7 +135,10 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
       <p className="mb-4 text-xs text-slate-500">
         Printer thermal ada di device masing-masing kasir, jadi sambungkan langsung dari device yang
         dipakai. Pilih <strong>Thermal Bluetooth</strong> supaya struk langsung ngeprint ke kertas
-        thermal, bukan buka dialog Print/PDF.
+        thermal, bukan buka dialog Print/PDF. Kalau printer gak muncul sama sekali di pencarian,
+        kemungkinan printernya pakai Bluetooth Classic (bukan BLE) yang gak didukung browser —
+        coba mode <strong>Print via Browser</strong> lalu pilih printernya dari dialog print
+        Android (kalau sudah pernah di-pairing lewat aplikasi bawaan printer itu).
       </p>
 
       <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -161,6 +168,23 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
           <button onClick={handleDisconnect} className="text-red-600 hover:underline">
             Putuskan
           </button>
+        </div>
+      )}
+
+      {printer.mode === "bluetooth" && !printer.deviceName && (
+        <div className="mb-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800">
+          <p className="mb-2">
+            Printer gak muncul di daftar? Coba cari tanpa filter (nampilin semua perangkat
+            Bluetooth di sekitar, gak cuma yang cocok pola printer umum).
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={connecting}
+            onClick={() => handleConnectBluetooth(true)}
+          >
+            Cari Semua Perangkat
+          </Button>
         </div>
       )}
 
