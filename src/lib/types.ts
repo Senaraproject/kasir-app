@@ -1,5 +1,15 @@
 export type Role = "owner" | "admin" | "kasir";
-export type PaymentMethod = "tunai" | "qris" | "debit" | "kredit" | "ewallet" | "transfer";
+export type PaymentMethod =
+  | "tunai"
+  | "qris"
+  | "gopay"
+  | "ovo"
+  | "dana"
+  | "shopeepay"
+  | "debit"
+  | "kredit"
+  | "transfer"
+  | "ewallet";
 export type TransactionStatus = "selesai" | "dibatalkan";
 
 export interface Branch {

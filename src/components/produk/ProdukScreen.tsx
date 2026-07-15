@@ -2,30 +2,26 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Tags, PackagePlus } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Tags } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 import { formatRupiah } from "@/lib/utils/currency";
 import type { Category, Product } from "@/lib/types";
 import { ProductFormModal } from "@/components/produk/ProductFormModal";
 import { CategoryModal } from "@/components/produk/CategoryModal";
-import { StockAdjustModal } from "@/components/produk/StockAdjustModal";
 
 interface Props {
   initialProducts: Product[];
   initialCategories: Category[];
-  canManage: boolean;
 }
 
-export function ProdukScreen({ initialProducts, initialCategories, canManage }: Props) {
+export function ProdukScreen({ initialProducts, initialCategories }: Props) {
   const [products, setProducts] = useState(initialProducts);
   const [categories, setCategories] = useState(initialCategories);
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [stockModalProduct, setStockModalProduct] = useState<Product | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const filtered = useMemo(
@@ -65,21 +61,19 @@ export function ProdukScreen({ initialProducts, initialCategories, canManage }: 
     <div className="mx-auto max-w-6xl p-4 md:p-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-slate-900">Produk</h1>
-        {canManage && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setCategoryModalOpen(true)}>
-              <Tags size={16} /> Kategori
-            </Button>
-            <Button
-              onClick={() => {
-                setEditingProduct(null);
-                setFormOpen(true);
-              }}
-            >
-              <Plus size={16} /> Tambah Produk
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setCategoryModalOpen(true)}>
+            <Tags size={16} /> Kategori
+          </Button>
+          <Button
+            onClick={() => {
+              setEditingProduct(null);
+              setFormOpen(true);
+            }}
+          >
+            <Plus size={16} /> Tambah Produk
+          </Button>
+        </div>
       </div>
 
       <div className="relative mb-4">
@@ -100,64 +94,42 @@ export function ProdukScreen({ initialProducts, initialCategories, canManage }: 
               <th className="px-4 py-3">Kategori</th>
               <th className="px-4 py-3 text-right">Harga</th>
               <th className="px-4 py-3 text-right">Stok</th>
-              {canManage && <th className="px-4 py-3 text-right">Aksi</th>}
+              <th className="px-4 py-3 text-right">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filtered.map((product) => {
-              const lowStock = product.stock <= product.low_stock_threshold;
-              return (
-                <tr key={product.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-slate-900">{product.name}</p>
-                    {product.sku && <p className="text-xs text-slate-400">SKU: {product.sku}</p>}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">{product.category?.name ?? "-"}</td>
-                  <td className="px-4 py-3 text-right font-medium">{formatRupiah(product.price)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {product.stock === 0 ? (
-                        <Badge tone="red">Habis</Badge>
-                      ) : lowStock ? (
-                        <Badge tone="amber">{product.stock} - Menipis</Badge>
-                      ) : (
-                        <Badge tone="green">{product.stock}</Badge>
-                      )}
-                    </div>
-                  </td>
-                  {canManage && (
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => setStockModalProduct(product)}
-                          title="Ubah stok"
-                          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100"
-                        >
-                          <PackagePlus size={16} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingProduct(product);
-                            setFormOpen(true);
-                          }}
-                          title="Edit"
-                          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product)}
-                          title="Hapus"
-                          className="rounded-md p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
+            {filtered.map((product) => (
+              <tr key={product.id} className="hover:bg-slate-50">
+                <td className="px-4 py-3">
+                  <p className="font-medium text-slate-900">{product.name}</p>
+                  {product.sku && <p className="text-xs text-slate-400">SKU: {product.sku}</p>}
+                </td>
+                <td className="px-4 py-3 text-slate-500">{product.category?.name ?? "-"}</td>
+                <td className="px-4 py-3 text-right font-medium">{formatRupiah(product.price)}</td>
+                <td className="px-4 py-3 text-right text-slate-600">{product.stock}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => {
+                        setEditingProduct(product);
+                        setFormOpen(true);
+                      }}
+                      title="Edit"
+                      className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product)}
+                      title="Hapus"
+                      className="rounded-md p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
@@ -181,12 +153,6 @@ export function ProdukScreen({ initialProducts, initialCategories, canManage }: 
         onClose={() => setCategoryModalOpen(false)}
         categories={categories}
         onChanged={refresh}
-      />
-      <StockAdjustModal
-        open={!!stockModalProduct}
-        onClose={() => setStockModalProduct(null)}
-        onSaved={refresh}
-        product={stockModalProduct}
       />
     </div>
   );

@@ -169,30 +169,20 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
 
         <div className="flex-1 overflow-y-auto p-4 pb-24 md:pb-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {filteredProducts.map((product) => {
-              const outOfStock = product.stock <= 0;
-              return (
-                <button
-                  key={product.id}
-                  disabled={outOfStock}
-                  onClick={() => cart.addItem(product)}
-                  className={clsx(
-                    "flex flex-col rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-transform active:scale-95",
-                    outOfStock && "cursor-not-allowed opacity-50"
-                  )}
-                >
-                  <span className="mb-1 line-clamp-2 text-sm font-medium text-slate-900">
-                    {product.name}
-                  </span>
-                  <span className="mb-2 text-xs text-slate-500">
-                    Stok: {product.stock}
-                  </span>
-                  <span className="mt-auto text-sm font-semibold text-blue-600">
-                    {formatRupiah(product.price)}
-                  </span>
-                </button>
-              );
-            })}
+            {filteredProducts.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => cart.addItem(product)}
+                className="flex flex-col rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-transform active:scale-95"
+              >
+                <span className="mb-1 line-clamp-2 text-sm font-medium text-slate-900">
+                  {product.name}
+                </span>
+                <span className="mt-auto text-sm font-semibold text-blue-600">
+                  {formatRupiah(product.price)}
+                </span>
+              </button>
+            ))}
             {filteredProducts.length === 0 && (
               <p className="col-span-full py-10 text-center text-sm text-slate-400">
                 Produk tidak ditemukan.
@@ -263,8 +253,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                     <span className="w-6 text-center text-sm font-medium">{item.qty}</span>
                     <button
                       onClick={() => cart.incrementItem(item.productId)}
-                      disabled={item.qty >= item.stock}
-                      className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40"
+                      className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200"
                     >
                       <Plus size={14} />
                     </button>

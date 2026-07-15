@@ -5,10 +5,14 @@ import type { StoreSettings, Transaction } from "@/lib/types";
 export const PAYMENT_LABELS: Record<string, string> = {
   tunai: "Tunai",
   qris: "QRIS",
+  gopay: "GoPay",
+  ovo: "OVO",
+  dana: "DANA",
+  shopeepay: "ShopeePay",
   debit: "Kartu Debit",
   kredit: "Kartu Kredit",
-  ewallet: "E-Wallet",
-  transfer: "Transfer",
+  transfer: "Transfer Bank",
+  ewallet: "E-Wallet Lainnya",
 };
 
 function truncate(text: string, max: number) {

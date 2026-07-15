@@ -50,7 +50,6 @@ function ProductForm({
     price: product ? String(product.price) : "",
     cost_price: product ? String(product.cost_price) : "",
     stock: product ? String(product.stock) : "0",
-    low_stock_threshold: product ? String(product.low_stock_threshold) : "5",
   }));
   const [saving, setSaving] = useState(false);
 
@@ -67,7 +66,6 @@ function ProductForm({
       price: Number(form.price) || 0,
       cost_price: Number(form.cost_price) || 0,
       stock: Number(form.stock) || 0,
-      low_stock_threshold: Number(form.low_stock_threshold) || 5,
     };
 
     const { error } = product
@@ -148,31 +146,17 @@ function ProductForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Stok Awal</Label>
-          <Input
-            type="number"
-            min={0}
-            disabled={!!product}
-            value={form.stock}
-            onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
-          />
-          {product && (
-            <p className="mt-1 text-xs text-slate-400">
-              Gunakan tombol &quot;Stok&quot; di tabel untuk mengubah stok.
-            </p>
-          )}
-        </div>
-        <div>
-          <Label>Batas Stok Menipis</Label>
-          <Input
-            type="number"
-            min={0}
-            value={form.low_stock_threshold}
-            onChange={(e) => setForm((f) => ({ ...f, low_stock_threshold: e.target.value }))}
-          />
-        </div>
+      <div>
+        <Label>Stok</Label>
+        <Input
+          type="number"
+          min={0}
+          value={form.stock}
+          onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
+        />
+        <p className="mt-1 text-xs text-slate-400">
+          Stok diisi & diperbarui manual, sistem gak otomatis menguranginya saat transaksi.
+        </p>
       </div>
 
       <Button type="submit" className="w-full" disabled={saving}>

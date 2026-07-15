@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Store,
+  History,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Role } from "@/lib/types";
@@ -24,7 +25,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/kasir", label: "Kasir", icon: ShoppingCart, roles: ["owner", "admin", "kasir"] },
-  { href: "/produk", label: "Produk", icon: Package, roles: ["owner", "admin", "kasir"] },
+  { href: "/riwayat", label: "Riwayat", icon: History, roles: ["owner", "admin", "kasir"] },
+  { href: "/produk", label: "Produk", icon: Package, roles: ["owner", "admin"] },
   { href: "/laporan", label: "Laporan", icon: BarChart3, roles: ["owner", "admin"] },
   { href: "/karyawan", label: "Karyawan", icon: Users, roles: ["owner", "admin"] },
   { href: "/pengaturan", label: "Pengaturan", icon: Settings, roles: ["owner", "admin"] },

@@ -79,7 +79,7 @@ create table if not exists transactions (
   discount numeric(12,2) not null default 0,
   tax numeric(12,2) not null default 0,
   total numeric(12,2) not null default 0,
-  payment_method text not null check (payment_method in ('tunai','qris','debit','kredit','ewallet','transfer')),
+  payment_method text not null check (payment_method in ('tunai','qris','gopay','ovo','dana','shopeepay','debit','kredit','transfer','ewallet')),
   cash_received numeric(12,2),
   change_amount numeric(12,2),
   status text not null default 'selesai' check (status in ('selesai','dibatalkan')),
@@ -115,52 +115,9 @@ create table if not exists store_settings (
 
 insert into store_settings (id) values (1) on conflict (id) do nothing;
 
--- ============================================================
--- FUNCTION: auto-decrement stock & log movement when a
--- transaction_item is inserted
--- ============================================================
-create or replace function fn_apply_stock_on_sale()
-returns trigger as $$
-begin
-  update products set stock = stock - new.qty, updated_at = now()
-  where id = new.product_id;
-
-  insert into stock_movements (product_id, change, reason, employee_id)
-  select new.product_id, -new.qty, 'penjualan', t.employee_id
-  from transactions t where t.id = new.transaction_id;
-
-  return new;
-end;
-$$ language plpgsql security definer;
-
-drop trigger if exists trg_apply_stock_on_sale on transaction_items;
-create trigger trg_apply_stock_on_sale
-  after insert on transaction_items
-  for each row execute function fn_apply_stock_on_sale();
-
--- ============================================================
--- FUNCTION: restore stock when a transaction is cancelled
--- ============================================================
-create or replace function fn_restore_stock_on_cancel()
-returns trigger as $$
-begin
-  if new.status = 'dibatalkan' and old.status <> 'dibatalkan' then
-    update products p set stock = p.stock + ti.qty, updated_at = now()
-    from transaction_items ti
-    where ti.transaction_id = new.id and ti.product_id = p.id;
-
-    insert into stock_movements (product_id, change, reason, employee_id)
-    select ti.product_id, ti.qty, 'pembatalan', new.employee_id
-    from transaction_items ti where ti.transaction_id = new.id;
-  end if;
-  return new;
-end;
-$$ language plpgsql security definer;
-
-drop trigger if exists trg_restore_stock_on_cancel on transactions;
-create trigger trg_restore_stock_on_cancel
-  after update on transactions
-  for each row execute function fn_restore_stock_on_cancel();
+-- Catatan: stok TIDAK dikelola otomatis oleh sistem (tidak ada trigger
+-- pengurangan/pengembalian stok). Stok diisi & diperbarui manual lewat
+-- halaman Produk, sesuai kebutuhan toko.
 
 -- ============================================================
 -- ROW LEVEL SECURITY

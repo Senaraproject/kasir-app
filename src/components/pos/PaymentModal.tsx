@@ -9,7 +9,18 @@ import { formatRupiah } from "@/lib/utils/currency";
 import type { PaymentMethod } from "@/lib/types";
 import { PAYMENT_LABELS } from "@/lib/printer/receipt";
 
-const METHODS: PaymentMethod[] = ["tunai", "qris", "debit", "kredit", "ewallet", "transfer"];
+const METHODS: PaymentMethod[] = [
+  "tunai",
+  "qris",
+  "gopay",
+  "ovo",
+  "dana",
+  "shopeepay",
+  "debit",
+  "kredit",
+  "transfer",
+  "ewallet",
+];
 const QUICK_AMOUNTS = [0, 5000, 10000, 20000, 50000, 100000];
 
 interface Props {

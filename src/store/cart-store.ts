@@ -6,7 +6,6 @@ export interface CartItem {
   name: string;
   price: number;
   qty: number;
-  stock: number;
 }
 
 interface CartState {
@@ -31,14 +30,12 @@ export const useCartStore = create<CartState>((set, get) => ({
     set((state) => {
       const existing = state.items.find((i) => i.productId === product.id);
       if (existing) {
-        if (existing.qty >= existing.stock) return state;
         return {
           items: state.items.map((i) =>
             i.productId === product.id ? { ...i, qty: i.qty + 1 } : i
           ),
         };
       }
-      if (product.stock <= 0) return state;
       return {
         items: [
           ...state.items,
@@ -47,7 +44,6 @@ export const useCartStore = create<CartState>((set, get) => ({
             name: product.name,
             price: product.price,
             qty: 1,
-            stock: product.stock,
           },
         ],
       };
@@ -56,9 +52,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   incrementItem: (productId) =>
     set((state) => ({
       items: state.items.map((i) =>
-        i.productId === productId && i.qty < i.stock
-          ? { ...i, qty: i.qty + 1 }
-          : i
+        i.productId === productId ? { ...i, qty: i.qty + 1 } : i
       ),
     })),
 
@@ -79,11 +73,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   setQty: (productId, qty) =>
     set((state) => ({
       items: state.items
-        .map((i) =>
-          i.productId === productId
-            ? { ...i, qty: Math.min(Math.max(qty, 0), i.stock) }
-            : i
-        )
+        .map((i) => (i.productId === productId ? { ...i, qty: Math.max(qty, 0) } : i))
         .filter((i) => i.qty > 0),
     })),
 

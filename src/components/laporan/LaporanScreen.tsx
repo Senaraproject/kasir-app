@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import clsx from "clsx";
-import { toast } from "sonner";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatRupiah } from "@/lib/utils/currency";
-import { PAYMENT_LABELS } from "@/lib/printer/receipt";
 import { SalesChart } from "@/components/laporan/SalesChart";
-import { Badge } from "@/components/ui/Badge";
 import type { Transaction } from "@/lib/types";
 
 type RangePreset = "today" | "7d" | "30d" | "month";
@@ -47,22 +46,6 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
 
     setTransactions(data ?? []);
     setLoading(false);
-  }
-
-  async function handleCancel(trx: Transaction) {
-    if (!confirm(`Batalkan transaksi ${trx.transaction_number}? Stok produk akan dikembalikan.`)) return;
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("transactions")
-      .update({ status: "dibatalkan" })
-      .eq("id", trx.id);
-
-    if (error) {
-      toast.error("Gagal membatalkan: " + error.message);
-      return;
-    }
-    toast.success("Transaksi dibatalkan, stok dikembalikan");
-    loadRange(preset);
   }
 
   const summary = useMemo(() => {
@@ -119,6 +102,8 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
         </div>
       </div>
 
+      {loading && <p className="mb-4 text-sm text-slate-400">Memuat...</p>}
+
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <p className="text-sm text-slate-500">Total Omzet</p>
@@ -165,63 +150,13 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
         )}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3">No. Transaksi</th>
-              <th className="px-4 py-3">Waktu</th>
-              <th className="px-4 py-3">Kasir</th>
-              <th className="px-4 py-3">Metode</th>
-              <th className="px-4 py-3 text-right">Total</th>
-              <th className="px-4 py-3 text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {loading && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
-                  Memuat...
-                </td>
-              </tr>
-            )}
-            {!loading &&
-              transactions.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-900">{t.transaction_number}</td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {new Date(t.created_at).toLocaleString("id-ID", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">{t.employee?.full_name ?? "-"}</td>
-                  <td className="px-4 py-3">
-                    <Badge tone="blue">{PAYMENT_LABELS[t.payment_method] ?? t.payment_method}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium">{formatRupiah(t.total)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleCancel(t)}
-                      className="text-xs font-medium text-red-600 hover:underline"
-                    >
-                      Batalkan
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            {!loading && transactions.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
-                  Belum ada transaksi pada rentang ini.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Link
+        href="/riwayat"
+        className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
+      >
+        Lihat daftar & detail semua transaksi di Riwayat Transaksi
+        <ArrowRight size={16} />
+      </Link>
     </div>
   );
 }
