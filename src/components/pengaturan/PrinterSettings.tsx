@@ -33,6 +33,7 @@ function buildDummyTransaction(): Transaction {
     change_amount: 5000,
     status: "selesai",
     created_at: new Date().toISOString(),
+    employee: { full_name: "Contoh Kasir" } as Transaction["employee"],
     items: [
       { id: "1", transaction_id: "dummy", product_id: null, product_name: "Contoh Produk", price: 25000, qty: 1, subtotal: 25000 },
     ],

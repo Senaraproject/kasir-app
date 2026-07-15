@@ -107,7 +107,12 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
 
       if (storeSettings) {
         try {
-          await printReceipt(printer.mode, printer.columns, { ...transaction, items } as Transaction, storeSettings);
+          const transactionWithEmployee = {
+            ...transaction,
+            items,
+            employee: { full_name: employee.full_name } as Transaction["employee"],
+          } as Transaction;
+          await printReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings);
         } catch (printErr) {
           toast.error(
             "Transaksi tersimpan, tapi cetak struk gagal: " +

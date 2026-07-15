@@ -39,6 +39,7 @@ export function buildReceiptBytes(
   const timeStr = date.toLocaleTimeString("id-ID", {
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
   });
 
   const itemColW = columns - 10;
@@ -53,12 +54,11 @@ export function buildReceiptBytes(
   if (store.address) e = e.line(store.address);
   if (store.phone) e = e.line(store.phone);
 
-  e = e
-    .rule({ style: "dashed" })
-    .align("left")
-    .line(`No: ${transaction.transaction_number}`)
-    .line(`${dateStr} ${timeStr}`)
-    .rule({ style: "dashed" });
+  e = e.rule({ style: "dashed" }).align("left").line(`${dateStr} ${timeStr}`);
+  if (transaction.employee?.full_name) {
+    e = e.line(`Kasir: ${transaction.employee.full_name}`);
+  }
+  e = e.line(`No. ${transaction.transaction_number}`).rule({ style: "dashed" });
 
   for (const item of transaction.items ?? []) {
     e = e.line(truncate(item.product_name, itemColW));
@@ -112,26 +112,23 @@ export function buildReceiptBytes(
     )
     .bold(false);
 
+  const methodLabel = PAYMENT_LABELS[transaction.payment_method] ?? transaction.payment_method;
+  const paidAmount =
+    transaction.payment_method === "tunai" && transaction.cash_received != null
+      ? transaction.cash_received
+      : transaction.total;
+  const changeAmount = transaction.payment_method === "tunai" ? transaction.change_amount ?? 0 : 0;
+
   e = e.table(
     [
       { width: columns - 14, align: "left" },
       { width: 14, align: "right" },
     ],
-    [[PAYMENT_LABELS[transaction.payment_method] ?? transaction.payment_method, ""]]
+    [
+      [`Bayar(${methodLabel})`, formatRupiah(paidAmount)],
+      ["Kembali", formatRupiah(changeAmount)],
+    ]
   );
-
-  if (transaction.payment_method === "tunai" && transaction.cash_received != null) {
-    e = e.table(
-      [
-        { width: columns - 14, align: "left" },
-        { width: 14, align: "right" },
-      ],
-      [
-        ["Bayar", formatRupiah(transaction.cash_received)],
-        ["Kembali", formatRupiah(transaction.change_amount ?? 0)],
-      ]
-    );
-  }
 
   e = e.rule({ style: "dashed" }).align("center");
 
