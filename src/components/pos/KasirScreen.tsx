@@ -10,7 +10,13 @@ import { usePrinterStore } from "@/store/printer-store";
 import { formatRupiah } from "@/lib/utils/currency";
 import { generateTransactionNumber } from "@/lib/utils/transaction-number";
 import { printReceipt } from "@/lib/printer/print";
-import type { Category, Employee, Product, StoreSettings, Transaction } from "@/lib/types";
+import type { Category, Employee, ItemType, Product, StoreSettings, Transaction } from "@/lib/types";
+
+const ITEM_TYPE_LABELS: Record<ItemType, string> = {
+  default: "Menu Utama",
+  addon: "Add On",
+  paket: "Paket",
+};
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PaymentModal } from "@/components/pos/PaymentModal";
@@ -26,6 +32,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
   const [products, setProducts] = useState(initialProducts);
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState<string | "all">("all");
+  const [typeFilter, setTypeFilter] = useState<ItemType | "all">("all");
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [cartOpenMobile, setCartOpenMobile] = useState(false);
@@ -40,9 +47,10 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         (p.barcode ?? "").includes(search) ||
         (p.sku ?? "").toLowerCase().includes(search.toLowerCase());
       const matchCategory = categoryId === "all" || p.category_id === categoryId;
-      return matchSearch && matchCategory;
+      const matchType = typeFilter === "all" || p.item_type === typeFilter;
+      return matchSearch && matchCategory && matchType;
     });
-  }, [products, search, categoryId]);
+  }, [products, search, categoryId, typeFilter]);
 
   async function refreshProducts() {
     const supabase = createClient();
@@ -170,6 +178,33 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
               </button>
             ))}
           </div>
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+            <button
+              onClick={() => setTypeFilter("all")}
+              className={clsx(
+                "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
+                typeFilter === "all"
+                  ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 text-slate-500"
+              )}
+            >
+              Semua Tipe
+            </button>
+            {(Object.keys(ITEM_TYPE_LABELS) as ItemType[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={clsx(
+                  "shrink-0 rounded-full border px-3 py-1 text-xs font-medium",
+                  typeFilter === t
+                    ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                    : "border-slate-200 text-slate-500"
+                )}
+              >
+                {ITEM_TYPE_LABELS[t]}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 pb-24 md:pb-4">
@@ -180,6 +215,11 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                 onClick={() => cart.addItem(product)}
                 className="flex flex-col rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-transform active:scale-95"
               >
+                {product.item_type !== "default" && (
+                  <span className="mb-1 w-fit rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                    {ITEM_TYPE_LABELS[product.item_type]}
+                  </span>
+                )}
                 <span className="mb-1 line-clamp-2 text-sm font-medium text-slate-900">
                   {product.name}
                 </span>
