@@ -55,7 +55,7 @@ function ProductForm({
     barcode: product?.barcode ?? "",
     price: product ? String(product.price) : "",
     cost_price: product ? String(product.cost_price) : "",
-    stock: product ? String(product.stock) : "0",
+    stock: product ? String(product.stock) : "999999",
     item_type: product?.item_type ?? ("default" as ItemType),
   }));
   const [saving, setSaving] = useState(false);
