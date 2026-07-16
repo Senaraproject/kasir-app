@@ -3,6 +3,7 @@
 import type { StoreSettings } from "@/lib/types";
 import { StoreSettingsForm } from "@/components/pengaturan/StoreSettingsForm";
 import { PrinterSettings } from "@/components/pengaturan/PrinterSettings";
+import { TelegramReportSettings } from "@/components/pengaturan/TelegramReportSettings";
 
 export function PengaturanScreen({ initialSettings }: { initialSettings: StoreSettings | null }) {
   if (!initialSettings) {
@@ -18,6 +19,7 @@ export function PengaturanScreen({ initialSettings }: { initialSettings: StoreSe
       <h1 className="text-xl font-semibold text-slate-900">Pengaturan</h1>
       <StoreSettingsForm initialSettings={initialSettings} />
       <PrinterSettings storeSettings={initialSettings} />
+      <TelegramReportSettings />
     </div>
   );
 }
