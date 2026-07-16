@@ -17,6 +17,7 @@ interface CartState {
   removeItem: (productId: string) => void;
   setQty: (productId: string, qty: number) => void;
   setDiscount: (discount: number) => void;
+  loadItems: (items: CartItem[], discount: number) => void;
   clear: () => void;
   subtotal: () => number;
   total: () => number;
@@ -78,6 +79,8 @@ export const useCartStore = create<CartState>((set, get) => ({
     })),
 
   setDiscount: (discount) => set({ discount: Math.max(0, discount) }),
+
+  loadItems: (items, discount) => set({ items, discount }),
 
   clear: () => set({ items: [], discount: 0 }),
 

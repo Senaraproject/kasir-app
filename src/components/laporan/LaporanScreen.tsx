@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatRupiah } from "@/lib/utils/currency";
+import { PAYMENT_LABELS } from "@/lib/printer/receipt";
 import { SalesChart } from "@/components/laporan/SalesChart";
 import type { Transaction } from "@/lib/types";
 
@@ -67,7 +68,20 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
       .reverse();
   }, [transactions]);
 
-  const topProducts = useMemo(() => {
+  const paymentBreakdown = useMemo(() => {
+    const map = new Map<string, { count: number; total: number }>();
+    for (const t of transactions) {
+      const entry = map.get(t.payment_method) ?? { count: 0, total: 0 };
+      entry.count += 1;
+      entry.total += t.total;
+      map.set(t.payment_method, entry);
+    }
+    return Array.from(map.entries())
+      .map(([method, v]) => ({ method, ...v }))
+      .sort((a, b) => b.total - a.total);
+  }, [transactions]);
+
+  const soldProducts = useMemo(() => {
     const map = new Map<string, { name: string; qty: number; revenue: number }>();
     for (const t of transactions) {
       for (const item of t.items ?? []) {
@@ -77,9 +91,7 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
         map.set(item.product_name, entry);
       }
     }
-    return Array.from(map.values())
-      .sort((a, b) => b.qty - a.qty)
-      .slice(0, 5);
+    return Array.from(map.values()).sort((a, b) => b.qty - a.qty);
   }, [transactions]);
 
   return (
@@ -129,12 +141,31 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
       </div>
 
       <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">Produk Terlaris</h2>
-        {topProducts.length === 0 ? (
+        <h2 className="mb-3 text-sm font-semibold text-slate-700">Rincian Metode Pembayaran</h2>
+        {paymentBreakdown.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400">Belum ada data.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
-            {topProducts.map((p, i) => (
+            {paymentBreakdown.map((p) => (
+              <li key={p.method} className="flex items-center justify-between py-2 text-sm">
+                <span className="font-medium text-slate-700">
+                  {PAYMENT_LABELS[p.method] ?? p.method}
+                </span>
+                <span className="text-slate-500">{p.count} transaksi</span>
+                <span className="font-medium">{formatRupiah(p.total)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4">
+        <h2 className="mb-3 text-sm font-semibold text-slate-700">Barang Terjual</h2>
+        {soldProducts.length === 0 ? (
+          <p className="py-6 text-center text-sm text-slate-400">Belum ada data.</p>
+        ) : (
+          <ul className="max-h-96 divide-y divide-slate-100 overflow-y-auto">
+            {soldProducts.map((p, i) => (
               <li key={p.name} className="flex items-center justify-between py-2 text-sm">
                 <span className="flex items-center gap-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-medium text-slate-500">

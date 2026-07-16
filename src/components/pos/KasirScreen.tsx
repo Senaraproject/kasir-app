@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, User, X, PackageOpen } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -10,16 +10,18 @@ import { usePrinterStore } from "@/store/printer-store";
 import { formatRupiah } from "@/lib/utils/currency";
 import { generateTransactionNumber } from "@/lib/utils/transaction-number";
 import { printReceipt, printKitchenReceipt } from "@/lib/printer/print";
-import type { Category, Employee, ItemType, Product, StoreSettings, Transaction } from "@/lib/types";
+import type { Category, Customer, Employee, HeldOrder, ItemType, Product, StoreSettings, Transaction } from "@/lib/types";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { PaymentModal } from "@/components/pos/PaymentModal";
+import { CustomerPickerModal } from "@/components/pos/CustomerPickerModal";
+import { HeldOrdersModal } from "@/components/pos/HeldOrdersModal";
 
 const ITEM_TYPE_LABELS: Record<ItemType, string> = {
   default: "Menu Utama",
   addon: "Add On",
   paket: "Paket",
 };
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { PaymentModal } from "@/components/pos/PaymentModal";
 
 interface Props {
   initialProducts: Product[];
@@ -36,6 +38,10 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [cartOpenMobile, setCartOpenMobile] = useState(false);
+  const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [heldOrdersOpen, setHeldOrdersOpen] = useState(false);
+  const [holding, setHolding] = useState(false);
 
   const cart = useCartStore();
   const printer = usePrinterStore();
@@ -62,6 +68,38 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
     if (data) setProducts(data as Product[]);
   }
 
+  async function handleHoldOrder() {
+    if (cart.items.length === 0) return;
+    setHolding(true);
+    const supabase = createClient();
+    const { error } = await supabase.from("held_orders").insert({
+      branch_id: employee.branch_id,
+      employee_id: employee.id,
+      label: cart.items[0]?.name ? `${cart.items[0].name} dkk` : null,
+      items: cart.items,
+      discount: cart.discount,
+    });
+    setHolding(false);
+
+    if (error) {
+      toast.error("Gagal menyimpan pesanan: " + error.message);
+      return;
+    }
+
+    toast.success("Pesanan disimpan");
+    cart.clear();
+    setSelectedCustomer(null);
+    setCartOpenMobile(false);
+  }
+
+  async function handleResumeOrder(order: HeldOrder) {
+    cart.loadItems(order.items, order.discount);
+    setHeldOrdersOpen(false);
+
+    const supabase = createClient();
+    await supabase.from("held_orders").delete().eq("id", order.id);
+  }
+
   async function handleConfirmPayment(payment: {
     method: Transaction["payment_method"];
     cashReceived: number | null;
@@ -85,6 +123,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
           transaction_number: generateTransactionNumber(),
           employee_id: employee.id,
           branch_id: employee.branch_id,
+          customer_id: selectedCustomer?.id ?? null,
           subtotal,
           discount: cart.discount,
           tax: 0,
@@ -135,6 +174,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
       }
 
       cart.clear();
+      setSelectedCustomer(null);
       setPaymentOpen(false);
       setCartOpenMobile(false);
       await refreshProducts();
@@ -268,13 +308,29 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
           <h2 className="font-semibold text-slate-900">Keranjang</h2>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setHeldOrdersOpen(true)}
+              className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
+              title="Pesanan Tersimpan"
+            >
+              <PackageOpen size={16} />
+            </button>
             {cart.items.length > 0 && (
-              <button
-                onClick={() => cart.clear()}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Kosongkan
-              </button>
+              <>
+                <button
+                  onClick={handleHoldOrder}
+                  disabled={holding}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  {holding ? "Menyimpan..." : "Simpan"}
+                </button>
+                <button
+                  onClick={() => cart.clear()}
+                  className="text-sm text-red-600 hover:underline"
+                >
+                  Kosongkan
+                </button>
+              </>
             )}
             <button onClick={() => setCartOpenMobile(false)} className="md:hidden text-slate-500">
               Tutup
@@ -321,6 +377,26 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         </div>
 
         <div className="border-t border-slate-200 p-4 space-y-3">
+          <button
+            onClick={() => setCustomerPickerOpen(true)}
+            className="flex w-full items-center justify-between rounded-lg border border-dashed border-slate-300 px-3 py-2 text-sm hover:bg-slate-50"
+          >
+            <span className="flex items-center gap-2 text-slate-600">
+              <User size={15} />
+              {selectedCustomer ? selectedCustomer.name : "Pilih Member (opsional)"}
+            </span>
+            {selectedCustomer && (
+              <X
+                size={15}
+                className="text-slate-400 hover:text-red-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedCustomer(null);
+                }}
+              />
+            )}
+          </button>
+
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-500">Subtotal</span>
             <span className="font-medium">{formatRupiah(cart.subtotal())}</span>
@@ -357,6 +433,18 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         total={cart.total()}
         submitting={submitting}
         onConfirm={handleConfirmPayment}
+      />
+
+      <CustomerPickerModal
+        open={customerPickerOpen}
+        onClose={() => setCustomerPickerOpen(false)}
+        onSelect={setSelectedCustomer}
+      />
+
+      <HeldOrdersModal
+        open={heldOrdersOpen}
+        onClose={() => setHeldOrdersOpen(false)}
+        onResume={handleResumeOrder}
       />
     </div>
   );
