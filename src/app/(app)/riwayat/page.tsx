@@ -1,14 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireEmployee } from "@/lib/supabase/auth";
 import { RiwayatScreen } from "@/components/riwayat/RiwayatScreen";
+import { getStoreTodayRangeUtc } from "@/lib/utils/date";
 
 export default async function RiwayatPage() {
   const employee = await requireEmployee();
   const supabase = await createClient();
 
-  const now = new Date();
-  const from = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-  const to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  const { from, to } = getStoreTodayRangeUtc();
 
   const { data: transactions } = await supabase
     .from("transactions")
