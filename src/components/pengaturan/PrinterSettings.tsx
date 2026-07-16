@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import clsx from "clsx";
-import { Bluetooth, Usb, Printer, Wifi } from "lucide-react";
+import { Bluetooth, Usb, Printer, Wifi, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Select, Label } from "@/components/ui/Input";
 import { usePrinterStore, type PrinterMode } from "@/store/printer-store";
 import { connectBluetoothPrinter, disconnectBluetoothPrinter, isBluetoothSupported } from "@/lib/printer/bluetooth";
 import { connectUsbPrinter, disconnectUsbPrinter, isUsbSupported } from "@/lib/printer/usb";
-import { printReceipt } from "@/lib/printer/print";
+import { printReceipt, printKitchenReceipt } from "@/lib/printer/print";
 import { createClient } from "@/lib/supabase/client";
 import type { StoreSettings, Transaction } from "@/lib/types";
 
@@ -17,6 +17,7 @@ const MODES: { key: PrinterMode; label: string; icon: React.ComponentType<{ size
   { key: "browser", label: "Print via Browser", icon: Printer },
   { key: "bluetooth", label: "Thermal Bluetooth", icon: Bluetooth },
   { key: "usb", label: "Thermal USB", icon: Usb },
+  { key: "rawbt", label: "RawBT (Android)", icon: Smartphone },
 ];
 
 function buildDummyTransaction(): Transaction {
@@ -24,6 +25,7 @@ function buildDummyTransaction(): Transaction {
     id: "dummy",
     branch_id: null,
     employee_id: null,
+    customer_id: null,
     transaction_number: "TRX-TEST-0001",
     subtotal: 25000,
     discount: 0,
@@ -32,6 +34,7 @@ function buildDummyTransaction(): Transaction {
     payment_method: "tunai",
     cash_received: 30000,
     change_amount: 5000,
+    note: null,
     status: "selesai",
     created_at: new Date().toISOString(),
     employee: { full_name: "Contoh Kasir" } as Transaction["employee"],
@@ -47,6 +50,7 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
   const printer = usePrinterStore();
   const [connecting, setConnecting] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [testingKitchen, setTestingKitchen] = useState(false);
   const [storeSettings, setStoreSettings] = useState<StoreSettings | null>(initialStoreSettings ?? null);
 
   useEffect(() => {
@@ -63,8 +67,8 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
   }, [initialStoreSettings]);
 
   async function handleSelectMode(mode: PrinterMode) {
-    if (mode === "browser") {
-      printer.setMode("browser");
+    if (mode === "browser" || mode === "rawbt") {
+      printer.setMode(mode);
       return;
     }
 
@@ -127,6 +131,19 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
     }
   }
 
+  async function handleTestKitchenPrint() {
+    if (!storeSettings) return;
+    setTestingKitchen(true);
+    try {
+      await printKitchenReceipt(printer.mode, printer.columns, buildDummyTransaction(), storeSettings);
+      toast.success("Perintah cetak struk dapur terkirim");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mencetak");
+    } finally {
+      setTestingKitchen(false);
+    }
+  }
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
       <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-800">
@@ -134,11 +151,10 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
       </h2>
       <p className="mb-4 text-xs text-slate-500">
         Printer thermal ada di device masing-masing kasir, jadi sambungkan langsung dari device yang
-        dipakai. Pilih <strong>Thermal Bluetooth</strong> supaya struk langsung ngeprint ke kertas
-        thermal, bukan buka dialog Print/PDF. Kalau printer gak muncul sama sekali di pencarian,
-        kemungkinan printernya pakai Bluetooth Classic (bukan BLE) yang gak didukung browser —
-        coba mode <strong>Print via Browser</strong> lalu pilih printernya dari dialog print
-        Android (kalau sudah pernah di-pairing lewat aplikasi bawaan printer itu).
+        dipakai. Pilih <strong>Thermal Bluetooth</strong> kalau printernya BLE biasa. Kalau printer
+        built-in/bawaan mesin kasir (gak muncul di pencarian Bluetooth/USB), pakai{" "}
+        <strong>RawBT (Android)</strong> — install app RawBT dulu, hasil cetaknya jauh lebih rapi
+        & cepat dibanding mode Print via Browser biasa.
       </p>
 
       <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -160,7 +176,7 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
         ))}
       </div>
 
-      {printer.mode !== "browser" && (
+      {(printer.mode === "bluetooth" || printer.mode === "usb") && (
         <div className="mb-4 flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 text-sm">
           <span className="text-slate-600">
             {printer.deviceName ? `Terhubung: ${printer.deviceName}` : "Belum terhubung"}
@@ -168,6 +184,14 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
           <button onClick={handleDisconnect} className="text-red-600 hover:underline">
             Putuskan
           </button>
+        </div>
+      )}
+
+      {printer.mode === "rawbt" && (
+        <div className="mb-4 rounded-lg bg-blue-50 p-3 text-xs text-blue-800">
+          Pastikan aplikasi <strong>RawBT Print Service</strong> sudah di-install & printer sudah
+          dipilih di pengaturan RawBT (mis. driver &quot;Inner Printer&quot; buat printer built-in).
+          Setiap cetak struk, RawBT bakal otomatis kebuka sebentar buat proses print.
         </div>
       )}
 
@@ -200,9 +224,28 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
         </Select>
       </div>
 
-      <Button variant="secondary" onClick={handleTestPrint} disabled={testing || !storeSettings}>
-        {testing ? "Mencetak..." : "Cetak Struk Percobaan"}
-      </Button>
+      <label className="mb-4 flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={printer.printKitchen}
+          onChange={(e) => printer.setPrintKitchen(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300"
+        />
+        Otomatis cetak Struk Dapur juga setiap transaksi
+      </label>
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" onClick={handleTestPrint} disabled={testing || !storeSettings}>
+          {testing ? "Mencetak..." : "Cetak Struk Percobaan"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleTestKitchenPrint}
+          disabled={testingKitchen || !storeSettings}
+        >
+          {testingKitchen ? "Mencetak..." : "Cetak Struk Dapur Percobaan"}
+        </Button>
+      </div>
     </div>
   );
 }

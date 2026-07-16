@@ -1,9 +1,16 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
+import { Printer, ChefHat } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { formatRupiah } from "@/lib/utils/currency";
 import { PAYMENT_LABELS } from "@/lib/printer/receipt";
+import { printReceipt, printKitchenReceipt } from "@/lib/printer/print";
+import { usePrinterStore } from "@/store/printer-store";
+import { createClient } from "@/lib/supabase/client";
 import type { Transaction } from "@/lib/types";
 
 export function TransactionDetailModal({
@@ -13,9 +20,33 @@ export function TransactionDetailModal({
   transaction: Transaction | null;
   onClose: () => void;
 }) {
+  const printer = usePrinterStore();
+  const [reprinting, setReprinting] = useState<"receipt" | "kitchen" | null>(null);
+
   if (!transaction) return null;
 
   const date = new Date(transaction.created_at);
+
+  async function handleReprint(kind: "receipt" | "kitchen") {
+    if (!transaction) return;
+    setReprinting(kind);
+    try {
+      const supabase = createClient();
+      const { data: storeSettings } = await supabase.from("store_settings").select("*").eq("id", 1).single();
+      if (!storeSettings) throw new Error("Pengaturan toko tidak ditemukan.");
+
+      if (kind === "receipt") {
+        await printReceipt(printer.mode, printer.columns, transaction, storeSettings);
+      } else {
+        await printKitchenReceipt(printer.mode, printer.columns, transaction, storeSettings);
+      }
+      toast.success("Perintah cetak terkirim");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mencetak");
+    } finally {
+      setReprinting(null);
+    }
+  }
 
   return (
     <Modal open={!!transaction} onClose={onClose} title="Detail Transaksi" size="sm">
@@ -41,6 +72,12 @@ export function TransactionDetailModal({
               <span>{transaction.employee.full_name}</span>
             </div>
           )}
+          {transaction.customer?.name && (
+            <div className="flex justify-between">
+              <span className="text-slate-500">Member</span>
+              <span>{transaction.customer.name}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className="text-slate-500">Status</span>
             <Badge tone={transaction.status === "selesai" ? "green" : "red"}>
@@ -48,6 +85,13 @@ export function TransactionDetailModal({
             </Badge>
           </div>
         </div>
+
+        {transaction.note && (
+          <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+            <span className="font-medium">Catatan: </span>
+            {transaction.note}
+          </div>
+        )}
 
         <div>
           <p className="mb-2 text-xs font-medium uppercase text-slate-400">Item</p>
@@ -97,6 +141,25 @@ export function TransactionDetailModal({
               </div>
             </>
           )}
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleReprint("receipt")}
+            disabled={reprinting !== null}
+          >
+            <Printer size={14} /> {reprinting === "receipt" ? "Mencetak..." : "Cetak Ulang Struk"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleReprint("kitchen")}
+            disabled={reprinting !== null}
+          >
+            <ChefHat size={14} /> {reprinting === "kitchen" ? "Mencetak..." : "Cetak Struk Dapur"}
+          </Button>
         </div>
       </div>
     </Modal>

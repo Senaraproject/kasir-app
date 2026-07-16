@@ -70,11 +70,22 @@ create table if not exists stock_movements (
   created_at timestamptz not null default now()
 );
 
+-- ---------- CUSTOMERS (member/pelanggan) ----------
+create table if not exists customers (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  phone text,
+  email text,
+  note text,
+  created_at timestamptz not null default now()
+);
+
 -- ---------- TRANSACTIONS ----------
 create table if not exists transactions (
   id uuid primary key default gen_random_uuid(),
   branch_id uuid references branches(id) on delete set null,
   employee_id uuid references employees(id) on delete set null,
+  customer_id uuid references customers(id) on delete set null,
   transaction_number text not null unique,
   subtotal numeric(12,2) not null default 0,
   discount numeric(12,2) not null default 0,
@@ -83,12 +94,25 @@ create table if not exists transactions (
   payment_method text not null check (payment_method in ('tunai','qris','gopay','ovo','dana','shopeepay','debit','kredit','transfer','ewallet')),
   cash_received numeric(12,2),
   change_amount numeric(12,2),
+  note text,
   status text not null default 'selesai' check (status in ('selesai','dibatalkan')),
   created_at timestamptz not null default now()
 );
 
 create index if not exists idx_transactions_created on transactions(created_at);
 create index if not exists idx_transactions_employee on transactions(employee_id);
+
+-- ---------- HELD ORDERS (simpan pesanan sementara sebelum bayar) ----------
+create table if not exists held_orders (
+  id uuid primary key default gen_random_uuid(),
+  branch_id uuid references branches(id) on delete set null,
+  employee_id uuid references employees(id) on delete set null,
+  label text,
+  items jsonb not null,
+  discount numeric(12,2) not null default 0,
+  note text,
+  created_at timestamptz not null default now()
+);
 
 -- ---------- TRANSACTION ITEMS ----------
 create table if not exists transaction_items (
@@ -131,6 +155,8 @@ alter table stock_movements enable row level security;
 alter table transactions enable row level security;
 alter table transaction_items enable row level security;
 alter table store_settings enable row level security;
+alter table customers enable row level security;
+alter table held_orders enable row level security;
 
 -- Helper: cek apakah user login adalah employee aktif
 create or replace function is_active_employee()
@@ -174,3 +200,7 @@ create policy "transaction_items_insert" on transaction_items for insert with ch
 -- store_settings: semua karyawan boleh baca, hanya owner/admin boleh ubah
 create policy "store_settings_select" on store_settings for select using (is_active_employee());
 create policy "store_settings_write" on store_settings for update using (is_admin_or_owner());
+
+-- customers & held_orders: semua karyawan aktif boleh kelola
+create policy "customers_all" on customers for all using (is_active_employee()) with check (is_active_employee());
+create policy "held_orders_all" on held_orders for all using (is_active_employee()) with check (is_active_employee());

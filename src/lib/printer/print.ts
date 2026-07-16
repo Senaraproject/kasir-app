@@ -1,22 +1,22 @@
 import type { StoreSettings, Transaction } from "@/lib/types";
-import { buildReceiptBytes } from "@/lib/printer/receipt";
+import { buildReceiptBytes, buildKitchenReceiptBytes } from "@/lib/printer/receipt";
 import { printViaBluetooth, isBluetoothPrinterConnected } from "@/lib/printer/bluetooth";
 import { printViaUsb, isUsbPrinterConnected } from "@/lib/printer/usb";
-import { printViaBrowser } from "@/lib/printer/print-fallback";
+import { printViaBrowser, printKitchenReceiptViaBrowser } from "@/lib/printer/print-fallback";
+import { printViaRawBT } from "@/lib/printer/rawbt";
 import type { PrinterMode } from "@/store/printer-store";
 
-export async function printReceipt(
+async function dispatchBytes(
   mode: PrinterMode,
   columns: 32 | 42 | 48,
-  transaction: Transaction,
-  store: StoreSettings
+  buildBytes: () => Uint8Array,
+  fallbackViaBrowser: () => void
 ): Promise<void> {
   if (mode === "bluetooth") {
     if (!isBluetoothPrinterConnected()) {
       throw new Error("Printer Bluetooth belum terhubung. Sambungkan lagi di halaman Pengaturan.");
     }
-    const bytes = buildReceiptBytes(transaction, store, columns);
-    await printViaBluetooth(bytes);
+    await printViaBluetooth(buildBytes());
     return;
   }
 
@@ -24,10 +24,42 @@ export async function printReceipt(
     if (!isUsbPrinterConnected()) {
       throw new Error("Printer USB belum terhubung. Sambungkan lagi di halaman Pengaturan.");
     }
-    const bytes = buildReceiptBytes(transaction, store, columns);
-    await printViaUsb(bytes);
+    await printViaUsb(buildBytes());
     return;
   }
 
-  printViaBrowser(transaction, store);
+  if (mode === "rawbt") {
+    printViaRawBT(buildBytes());
+    return;
+  }
+
+  fallbackViaBrowser();
+}
+
+export async function printReceipt(
+  mode: PrinterMode,
+  columns: 32 | 42 | 48,
+  transaction: Transaction,
+  store: StoreSettings
+): Promise<void> {
+  await dispatchBytes(
+    mode,
+    columns,
+    () => buildReceiptBytes(transaction, store, columns),
+    () => printViaBrowser(transaction, store)
+  );
+}
+
+export async function printKitchenReceipt(
+  mode: PrinterMode,
+  columns: 32 | 42 | 48,
+  transaction: Transaction,
+  store: StoreSettings
+): Promise<void> {
+  await dispatchBytes(
+    mode,
+    columns,
+    () => buildKitchenReceiptBytes(transaction, store, columns),
+    () => printKitchenReceiptViaBrowser(transaction, store)
+  );
 }

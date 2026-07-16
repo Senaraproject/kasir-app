@@ -12,7 +12,7 @@ export default async function LaporanPage() {
 
   const { data: transactions } = await supabase
     .from("transactions")
-    .select("*, items:transaction_items(*), employee:employees(full_name)")
+    .select("*, items:transaction_items(*), employee:employees(full_name), customer:customers(name)")
     .eq("status", "selesai")
     .gte("created_at", from.toISOString())
     .order("created_at", { ascending: false });

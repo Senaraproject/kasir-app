@@ -4,7 +4,7 @@ import { useState } from "react";
 import clsx from "clsx";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { Input, Label } from "@/components/ui/Input";
+import { Input, Label, Textarea } from "@/components/ui/Input";
 import { formatRupiah } from "@/lib/utils/currency";
 import type { PaymentMethod } from "@/lib/types";
 import { PAYMENT_LABELS } from "@/lib/printer/receipt";
@@ -28,7 +28,7 @@ interface Props {
   onClose: () => void;
   total: number;
   submitting: boolean;
-  onConfirm: (payment: { method: PaymentMethod; cashReceived: number | null }) => void;
+  onConfirm: (payment: { method: PaymentMethod; cashReceived: number | null; note: string | null }) => void;
 }
 
 export function PaymentModal({ open, onClose, total, submitting, onConfirm }: Props) {
@@ -48,10 +48,11 @@ function PaymentForm({
 }: {
   total: number;
   submitting: boolean;
-  onConfirm: (payment: { method: PaymentMethod; cashReceived: number | null }) => void;
+  onConfirm: (payment: { method: PaymentMethod; cashReceived: number | null; note: string | null }) => void;
 }) {
   const [method, setMethod] = useState<PaymentMethod>("tunai");
   const [cashReceived, setCashReceived] = useState<number>(total);
+  const [note, setNote] = useState("");
 
   const change = method === "tunai" ? Math.max(0, cashReceived - total) : 0;
   const insufficientCash = method === "tunai" && cashReceived < total;
@@ -110,6 +111,16 @@ function PaymentForm({
         </div>
       )}
 
+      <div>
+        <Label>Catatan (opsional)</Label>
+        <Textarea
+          rows={2}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Contoh: gak pake cabe, dibungkus terpisah, dll"
+        />
+      </div>
+
       <Button
         className="w-full"
         size="lg"
@@ -118,6 +129,7 @@ function PaymentForm({
           onConfirm({
             method,
             cashReceived: method === "tunai" ? cashReceived : null,
+            note: note.trim() || null,
           })
         }
       >

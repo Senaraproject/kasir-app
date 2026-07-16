@@ -71,6 +71,10 @@ export function buildReceiptBytes(
     );
   }
 
+  if (transaction.note) {
+    e = e.rule({ style: "dashed" }).line(`Catatan: ${transaction.note}`);
+  }
+
   e = e.rule({ style: "dashed" });
 
   e = e.table(
@@ -135,6 +139,57 @@ export function buildReceiptBytes(
   if (store.receipt_footer) {
     e = e.line(store.receipt_footer);
   }
+
+  const result = e.newline().newline().cut().encode();
+  return result;
+}
+
+/** Struk dapur: cuma daftar item & catatan, tanpa harga/pembayaran, buat dapur nyiapin pesanan. */
+export function buildKitchenReceiptBytes(
+  transaction: Transaction,
+  store: StoreSettings,
+  columns: 32 | 42 | 48 = 32
+): Uint8Array {
+  const encoder = new ReceiptPrinterEncoder({
+    language: "esc-pos",
+    columns,
+  });
+
+  const date = new Date(transaction.created_at);
+  const dateStr = date.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+  const timeStr = date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+
+  let e = encoder
+    .initialize()
+    .align("center")
+    .bold(true)
+    .size("normal")
+    .line("STRUK DAPUR")
+    .bold(false)
+    .line(store.store_name)
+    .rule({ style: "dashed" })
+    .align("left")
+    .line(`${dateStr} ${timeStr}`);
+
+  if (transaction.employee?.full_name) {
+    e = e.line(`Kasir: ${transaction.employee.full_name}`);
+  }
+  e = e.line(`No. ${transaction.transaction_number}`).rule({ style: "dashed" });
+
+  for (const item of transaction.items ?? []) {
+    e = e.bold(true).line(`${item.qty}x ${item.product_name}`).bold(false);
+  }
+
+  if (transaction.note) {
+    e = e
+      .rule({ style: "dashed" })
+      .bold(true)
+      .line("CATATAN:")
+      .line(transaction.note)
+      .bold(false);
+  }
+
+  e = e.rule({ style: "dashed" });
 
   const result = e.newline().newline().cut().encode();
   return result;

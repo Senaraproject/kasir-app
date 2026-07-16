@@ -9,7 +9,7 @@ import { useCartStore } from "@/store/cart-store";
 import { usePrinterStore } from "@/store/printer-store";
 import { formatRupiah } from "@/lib/utils/currency";
 import { generateTransactionNumber } from "@/lib/utils/transaction-number";
-import { printReceipt } from "@/lib/printer/print";
+import { printReceipt, printKitchenReceipt } from "@/lib/printer/print";
 import type { Category, Employee, ItemType, Product, StoreSettings, Transaction } from "@/lib/types";
 
 const ITEM_TYPE_LABELS: Record<ItemType, string> = {
@@ -65,6 +65,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
   async function handleConfirmPayment(payment: {
     method: Transaction["payment_method"];
     cashReceived: number | null;
+    note: string | null;
   }) {
     if (cart.items.length === 0) return;
     setSubmitting(true);
@@ -91,6 +92,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
           payment_method: payment.method,
           cash_received: payment.cashReceived,
           change_amount: changeAmount,
+          note: payment.note,
         })
         .select()
         .single();
@@ -121,6 +123,9 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
             employee: { full_name: employee.full_name } as Transaction["employee"],
           } as Transaction;
           await printReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings);
+          if (printer.printKitchen) {
+            await printKitchenReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings);
+          }
         } catch (printErr) {
           toast.error(
             "Transaksi tersimpan, tapi cetak struk gagal: " +

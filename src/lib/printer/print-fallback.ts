@@ -85,9 +85,10 @@ export function printViaBrowser(transaction: Transaction, store: StoreSettings) 
   .totals-line { padding: 3px 0; }
   .totals-line.grand { font-weight: 700; font-size: 17px; padding-top: 6px; }
   .footer { margin-top: 10px; font-size: 12px; color: #5b6b63; }
+  .item-note { font-size: 12px; color: #5b6b63; margin: 8px 0; padding: 6px 8px; background: #f4f8f6; border-radius: 8px; }
 
   @media print {
-    html, body { background: #fff; padding: 0; }
+    html, body { background: #fff; padding: 0; color: #000; }
     .receipt {
       max-width: 100%;
       box-shadow: none;
@@ -96,7 +97,10 @@ export function printViaBrowser(transaction: Transaction, store: StoreSettings) 
       mask-image: none;
       padding: 8px;
     }
-    .store-name { font-size: 16px; }
+    .store-name { font-size: 16px; color: #000; }
+    .address, .footer { color: #000; }
+    hr { border-top: 1px dashed #000; }
+    .item-note { color: #000; }
   }
 </style>
 </head>
@@ -113,6 +117,7 @@ export function printViaBrowser(transaction: Transaction, store: StoreSettings) 
     <div class="order-no">No. ${escapeHtml(transaction.transaction_number)}</div>
     <hr />
     ${rows}
+    ${transaction.note ? `<div class="item-note"><strong>Catatan:</strong> ${escapeHtml(transaction.note)}</div>` : ""}
     <hr />
     ${transaction.discount > 0 ? `<div class="totals-line"><span>Subtotal</span><span>${formatRupiah(transaction.subtotal)}</span></div><div class="totals-line"><span>Diskon</span><span>-${formatRupiah(transaction.discount)}</span></div>` : ""}
     ${transaction.tax > 0 ? `<div class="totals-line"><span>Pajak</span><span>${formatRupiah(transaction.tax)}</span></div>` : ""}
@@ -132,6 +137,57 @@ export function printViaBrowser(transaction: Transaction, store: StoreSettings) 
 </body>
 </html>`;
 
+  openPrintWindow(html);
+}
+
+/** Cetak struk dapur (item + catatan doang, tanpa harga) lewat dialog print bawaan browser. */
+export function printKitchenReceiptViaBrowser(transaction: Transaction, store: StoreSettings) {
+  const date = new Date(transaction.created_at);
+  const dateStr = date.toLocaleDateString("sv-SE");
+  const timeStr = date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+
+  const rows = (transaction.items ?? [])
+    .map((item) => `<div class="k-item">${item.qty}x ${escapeHtml(item.product_name)}</div>`)
+    .join("");
+
+  const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Struk Dapur ${escapeHtml(transaction.transaction_number)}</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 12px; font-family: "Courier New", monospace; color: #000; }
+  .center { text-align: center; }
+  .title { font-size: 18px; font-weight: 700; }
+  hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+  .k-item { font-weight: 700; font-size: 16px; padding: 4px 0; }
+  .note { font-weight: 700; margin-top: 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="center title">STRUK DAPUR</div>
+  <div class="center">${escapeHtml(store.store_name)}</div>
+  <hr />
+  <div>${dateStr} ${timeStr}</div>
+  ${transaction.employee?.full_name ? `<div>Kasir: ${escapeHtml(transaction.employee.full_name)}</div>` : ""}
+  <div>No. ${escapeHtml(transaction.transaction_number)}</div>
+  <hr />
+  ${rows}
+  ${transaction.note ? `<hr /><div class="note">CATATAN: ${escapeHtml(transaction.note)}</div>` : ""}
+  <script>
+    window.onload = function () {
+      setTimeout(function () { window.print(); }, 200);
+      window.onafterprint = function () { window.close(); };
+    };
+  </script>
+</body>
+</html>`;
+
+  openPrintWindow(html);
+}
+
+function openPrintWindow(html: string) {
   const printWindow = window.open("", "_blank", "width=420,height=680");
   if (!printWindow) {
     throw new Error("Popup diblokir browser. Izinkan popup untuk mencetak struk.");

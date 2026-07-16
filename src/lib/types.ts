@@ -70,6 +70,7 @@ export interface Transaction {
   id: string;
   branch_id: string | null;
   employee_id: string | null;
+  customer_id: string | null;
   transaction_number: string;
   subtotal: number;
   discount: number;
@@ -78,10 +79,32 @@ export interface Transaction {
   payment_method: PaymentMethod;
   cash_received: number | null;
   change_amount: number | null;
+  note: string | null;
   status: TransactionStatus;
   created_at: string;
   employee?: Employee | null;
+  customer?: Customer | null;
   items?: TransactionItem[];
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  note: string | null;
+  created_at: string;
+}
+
+export interface HeldOrder {
+  id: string;
+  branch_id: string | null;
+  employee_id: string | null;
+  label: string | null;
+  items: { productId: string; name: string; price: number; qty: number }[];
+  discount: number;
+  note: string | null;
+  created_at: string;
 }
 
 export interface TransactionItem {
