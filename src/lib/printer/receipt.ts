@@ -19,6 +19,36 @@ function truncate(text: string, max: number) {
   return text.length > max ? text.slice(0, max - 1) + "." : text;
 }
 
+/** Pecah teks jadi beberapa baris pendek (word-wrap manual) supaya tiap baris tetap
+ * dalam batas kolom printer - biar align("center") kepakai bener di tiap baris,
+ * gak keserahin ke auto-wrap printer yang biasanya rata-kiri-in baris sambungan. */
+function wrapText(text: string, maxWidth: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxWidth) {
+      current = candidate;
+      continue;
+    }
+    if (current) lines.push(current);
+    if (word.length > maxWidth) {
+      let remaining = word;
+      while (remaining.length > maxWidth) {
+        lines.push(remaining.slice(0, maxWidth));
+        remaining = remaining.slice(maxWidth);
+      }
+      current = remaining;
+    } else {
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length > 0 ? lines : [""];
+}
+
 /** Bangun perintah ESC/POS (Uint8Array) untuk dikirim ke printer thermal 58mm/80mm. */
 export function buildReceiptBytes(
   transaction: Transaction,
@@ -44,14 +74,13 @@ export function buildReceiptBytes(
 
   const itemColW = columns - 10;
 
-  let e = encoder
-    .initialize()
-    .align("center")
-    .bold(true)
-    .line(store.store_name)
-    .bold(false);
+  let e = encoder.initialize().align("center").bold(true);
+  for (const line of wrapText(store.store_name, columns)) e = e.line(line);
+  e = e.bold(false);
 
-  if (store.address) e = e.line(store.address);
+  if (store.address) {
+    for (const line of wrapText(store.address, columns)) e = e.line(line);
+  }
   if (store.phone) e = e.line(store.phone);
 
   e = e.rule({ style: "dashed" }).align("left").line(`${dateStr} ${timeStr}`);
@@ -165,11 +194,9 @@ export function buildKitchenReceiptBytes(
     .bold(true)
     .size("normal")
     .line("STRUK DAPUR")
-    .bold(false)
-    .line(store.store_name)
-    .rule({ style: "dashed" })
-    .align("left")
-    .line(`${dateStr} ${timeStr}`);
+    .bold(false);
+  for (const line of wrapText(store.store_name, columns)) e = e.line(line);
+  e = e.rule({ style: "dashed" }).align("left").line(`${dateStr} ${timeStr}`);
 
   if (transaction.employee?.full_name) {
     e = e.line(`Kasir: ${transaction.employee.full_name}`);

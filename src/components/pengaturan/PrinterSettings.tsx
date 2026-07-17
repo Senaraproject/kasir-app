@@ -224,15 +224,10 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
         </Select>
       </div>
 
-      <label className="mb-4 flex items-center gap-2 text-sm text-slate-700">
-        <input
-          type="checkbox"
-          checked={printer.printKitchen}
-          onChange={(e) => printer.setPrintKitchen(e.target.checked)}
-          className="h-4 w-4 rounded border-slate-300"
-        />
-        Otomatis cetak Struk Dapur juga setiap transaksi
-      </label>
+      <p className="mb-4 text-xs text-slate-400">
+        Struk dapur gak dicetak otomatis - setelah struk pelanggan tercetak, akan muncul tombol
+        &quot;Cetak Struk Dapur&quot; di notifikasi buat cetak manual kalau memang perlu.
+      </p>
 
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" onClick={handleTestPrint} disabled={testing || !storeSettings}>

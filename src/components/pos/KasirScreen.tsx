@@ -152,25 +152,43 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
       const { error: itemsError } = await supabase.from("transaction_items").insert(items);
       if (itemsError) throw new Error(itemsError.message);
 
-      toast.success("Transaksi berhasil!");
-
       if (storeSettings) {
+        const transactionWithEmployee = {
+          ...transaction,
+          items,
+          employee: { full_name: employee.full_name } as Transaction["employee"],
+        } as Transaction;
+
         try {
-          const transactionWithEmployee = {
-            ...transaction,
-            items,
-            employee: { full_name: employee.full_name } as Transaction["employee"],
-          } as Transaction;
           await printReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings);
-          if (printer.printKitchen) {
-            await printKitchenReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings);
-          }
+          toast.success("Transaksi berhasil! Struk tercetak.", {
+            action: {
+              label: "Cetak Struk Dapur",
+              onClick: () => {
+                printKitchenReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings).catch(
+                  (err) => toast.error(err instanceof Error ? err.message : "Gagal mencetak struk dapur")
+                );
+              },
+            },
+          });
         } catch (printErr) {
           toast.error(
             "Transaksi tersimpan, tapi cetak struk gagal: " +
-              (printErr instanceof Error ? printErr.message : String(printErr))
+              (printErr instanceof Error ? printErr.message : String(printErr)),
+            {
+              action: {
+                label: "Cetak Struk Dapur",
+                onClick: () => {
+                  printKitchenReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings).catch(
+                    (err) => toast.error(err instanceof Error ? err.message : "Gagal mencetak struk dapur")
+                  );
+                },
+              },
+            }
           );
         }
+      } else {
+        toast.success("Transaksi berhasil!");
       }
 
       cart.clear();
