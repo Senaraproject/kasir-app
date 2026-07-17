@@ -169,7 +169,7 @@ export function buildReceiptBytes(
     e = e.line(store.receipt_footer);
   }
 
-  const result = e.newline().newline().cut().encode();
+  const result = e.newline().newline().newline().newline().cut().encode();
   return result;
 }
 
@@ -218,6 +218,6 @@ export function buildKitchenReceiptBytes(
 
   e = e.rule({ style: "dashed" });
 
-  const result = e.newline().newline().cut().encode();
+  const result = e.newline().newline().newline().newline().cut().encode();
   return result;
 }

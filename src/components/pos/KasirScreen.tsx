@@ -9,13 +9,14 @@ import { useCartStore } from "@/store/cart-store";
 import { usePrinterStore } from "@/store/printer-store";
 import { formatRupiah } from "@/lib/utils/currency";
 import { generateTransactionNumber } from "@/lib/utils/transaction-number";
-import { printReceipt, printKitchenReceipt } from "@/lib/printer/print";
+import { printReceipt } from "@/lib/printer/print";
 import type { Category, Customer, Employee, HeldOrder, ItemType, Product, StoreSettings, Transaction } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PaymentModal } from "@/components/pos/PaymentModal";
 import { CustomerPickerModal } from "@/components/pos/CustomerPickerModal";
 import { HeldOrdersModal } from "@/components/pos/HeldOrdersModal";
+import { KitchenPrintPromptModal } from "@/components/pos/KitchenPrintPromptModal";
 
 const ITEM_TYPE_LABELS: Record<ItemType, string> = {
   default: "Menu Utama",
@@ -42,6 +43,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [heldOrdersOpen, setHeldOrdersOpen] = useState(false);
   const [holding, setHolding] = useState(false);
+  const [kitchenPromptTransaction, setKitchenPromptTransaction] = useState<Transaction | null>(null);
 
   const cart = useCartStore();
   const printer = usePrinterStore();
@@ -161,32 +163,15 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
 
         try {
           await printReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings);
-          toast.success("Transaksi berhasil! Struk tercetak.", {
-            action: {
-              label: "Cetak Struk Dapur",
-              onClick: () => {
-                printKitchenReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings).catch(
-                  (err) => toast.error(err instanceof Error ? err.message : "Gagal mencetak struk dapur")
-                );
-              },
-            },
-          });
+          toast.success("Transaksi berhasil! Struk tercetak.");
         } catch (printErr) {
           toast.error(
             "Transaksi tersimpan, tapi cetak struk gagal: " +
-              (printErr instanceof Error ? printErr.message : String(printErr)),
-            {
-              action: {
-                label: "Cetak Struk Dapur",
-                onClick: () => {
-                  printKitchenReceipt(printer.mode, printer.columns, transactionWithEmployee, storeSettings).catch(
-                    (err) => toast.error(err instanceof Error ? err.message : "Gagal mencetak struk dapur")
-                  );
-                },
-              },
-            }
+              (printErr instanceof Error ? printErr.message : String(printErr))
           );
         }
+
+        setKitchenPromptTransaction(transactionWithEmployee);
       } else {
         toast.success("Transaksi berhasil!");
       }
@@ -463,6 +448,14 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         open={heldOrdersOpen}
         onClose={() => setHeldOrdersOpen(false)}
         onResume={handleResumeOrder}
+      />
+
+      <KitchenPrintPromptModal
+        transaction={kitchenPromptTransaction}
+        storeSettings={storeSettings}
+        printerMode={printer.mode}
+        printerColumns={printer.columns}
+        onClose={() => setKitchenPromptTransaction(null)}
       />
     </div>
   );
