@@ -7,7 +7,11 @@ import { Bluetooth, Usb, Printer, Wifi, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Select, Label } from "@/components/ui/Input";
 import { usePrinterStore, type PrinterMode } from "@/store/printer-store";
-import { connectBluetoothPrinter, disconnectBluetoothPrinter, isBluetoothSupported } from "@/lib/printer/bluetooth";
+import {
+  connectBluetoothPrinter,
+  disconnectBluetoothPrinter,
+  isBluetoothSupported,
+} from "@/lib/printer/bluetooth";
 import { connectUsbPrinter, disconnectUsbPrinter, isUsbSupported } from "@/lib/printer/usb";
 import { printReceipt, printKitchenReceipt } from "@/lib/printer/print";
 import { createClient } from "@/lib/supabase/client";
@@ -102,8 +106,8 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
     }
     setConnecting(true);
     try {
-      const name = await connectBluetoothPrinter(showAll);
-      printer.setMode("bluetooth", name);
+      const { name, deviceId } = await connectBluetoothPrinter(showAll);
+      printer.setMode("bluetooth", name, deviceId);
       toast.success(`Terhubung ke ${name}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal terhubung ke printer.");
@@ -151,10 +155,12 @@ export function PrinterSettings({ storeSettings: initialStoreSettings }: { store
       </h2>
       <p className="mb-4 text-xs text-slate-500">
         Printer thermal ada di device masing-masing kasir, jadi sambungkan langsung dari device yang
-        dipakai. Pilih <strong>Thermal Bluetooth</strong> kalau printernya BLE biasa. Kalau printer
-        built-in/bawaan mesin kasir (gak muncul di pencarian Bluetooth/USB), pakai{" "}
-        <strong>RawBT (Android)</strong> — install app RawBT dulu, hasil cetaknya jauh lebih rapi
-        & cepat dibanding mode Print via Browser biasa.
+        dipakai. Pilih <strong>Thermal Bluetooth</strong> kalau printernya BLE biasa - setelah
+        connect sekali, aplikasi bakal coba sambung otomatis tiap dibuka lagi (gak perlu connect
+        manual terus, tergantung dukungan Chrome di device-nya). Kalau printer built-in/bawaan
+        mesin kasir (gak muncul di pencarian Bluetooth/USB), pakai <strong>RawBT (Android)</strong>{" "}
+        — install app RawBT dulu, hasil cetaknya jauh lebih rapi & cepat dibanding mode Print via
+        Browser biasa.
       </p>
 
       <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">

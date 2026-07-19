@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, Plus, Minus, Trash2, ShoppingCart, User, X, PackageOpen } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -44,9 +44,24 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
   const [heldOrdersOpen, setHeldOrdersOpen] = useState(false);
   const [holding, setHolding] = useState(false);
   const [kitchenPromptTransaction, setKitchenPromptTransaction] = useState<Transaction | null>(null);
+  const [heldOrdersCount, setHeldOrdersCount] = useState(0);
 
   const cart = useCartStore();
   const printer = usePrinterStore();
+
+  async function refreshHeldOrdersCount() {
+    const supabase = createClient();
+    const { count } = await supabase.from("held_orders").select("id", { count: "exact", head: true });
+    setHeldOrdersCount(count ?? 0);
+  }
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("held_orders")
+      .select("id", { count: "exact", head: true })
+      .then(({ count }) => setHeldOrdersCount(count ?? 0));
+  }, []);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -92,6 +107,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
     cart.clear();
     setSelectedCustomer(null);
     setCartOpenMobile(false);
+    refreshHeldOrdersCount();
   }
 
   async function handleResumeOrder(order: HeldOrder) {
@@ -100,6 +116,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
 
     const supabase = createClient();
     await supabase.from("held_orders").delete().eq("id", order.id);
+    refreshHeldOrdersCount();
   }
 
   async function handleConfirmPayment(payment: {
@@ -193,15 +210,29 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
       {/* Produk */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="border-b border-slate-200 bg-white p-4">
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <Input
-              className="pl-10"
-              placeholder="Cari produk, SKU, atau scan barcode..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
-            />
+          <div className="mb-3 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <Input
+                className="pl-10"
+                placeholder="Cari produk, SKU, atau scan barcode..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <button
+              onClick={() => setHeldOrdersOpen(true)}
+              className="relative flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              <PackageOpen size={16} />
+              <span className="hidden sm:inline">Pesanan Tersimpan</span>
+              {heldOrdersCount > 0 && (
+                <span className="ml-0.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white">
+                  {heldOrdersCount}
+                </span>
+              )}
+            </button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
@@ -311,13 +342,6 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
           <h2 className="font-semibold text-slate-900">Keranjang</h2>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setHeldOrdersOpen(true)}
-              className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
-              title="Pesanan Tersimpan"
-            >
-              <PackageOpen size={16} />
-            </button>
             {cart.items.length > 0 && (
               <>
                 <button
@@ -446,7 +470,10 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
 
       <HeldOrdersModal
         open={heldOrdersOpen}
-        onClose={() => setHeldOrdersOpen(false)}
+        onClose={() => {
+          setHeldOrdersOpen(false);
+          refreshHeldOrdersCount();
+        }}
         onResume={handleResumeOrder}
       />
 

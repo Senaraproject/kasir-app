@@ -23,6 +23,7 @@ interface BluetoothRemoteGATTServer {
 }
 
 interface BluetoothDevice {
+  id: string;
   name?: string;
   gatt?: BluetoothRemoteGATTServer;
 }
@@ -33,6 +34,9 @@ interface Bluetooth {
     optionalServices?: string[];
     acceptAllDevices?: boolean;
   }): Promise<BluetoothDevice>;
+  /** Perangkat yang sudah pernah diizinkan user - gak perlu munculin picker lagi.
+   * Cuma jalan di Chrome yang support "Persistent permissions" (kebanyakan Chrome Android). */
+  getDevices(): Promise<BluetoothDevice[]>;
 }
 
 interface USBEndpoint {

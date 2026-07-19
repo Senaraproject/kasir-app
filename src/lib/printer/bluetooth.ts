@@ -27,12 +27,24 @@ async function findWritableCharacteristic(
   throw new Error("Tidak menemukan characteristic yang bisa ditulis pada printer ini.");
 }
 
+async function connectToDevice(device: BluetoothDevice): Promise<{ name: string; deviceId: string }> {
+  const server = await device.gatt?.connect();
+  if (!server) throw new Error("Gagal terhubung ke printer.");
+
+  const characteristic = await findWritableCharacteristic(server);
+
+  cachedDevice = device;
+  cachedCharacteristic = characteristic;
+
+  return { name: device.name ?? "Printer Bluetooth", deviceId: device.id };
+}
+
 /**
  * Minta user memilih printer Bluetooth (butuh interaksi/klik user, hanya jalan di Chrome Android/Desktop).
  * `showAll=true` menampilkan semua perangkat BLE di sekitar (gak difilter service UUID),
  * berguna kalau printer gak muncul di pencarian normal karena UUID-nya gak dikenali.
  */
-export async function connectBluetoothPrinter(showAll = false): Promise<string> {
+export async function connectBluetoothPrinter(showAll = false): Promise<{ name: string; deviceId: string }> {
   const bluetooth = navigator.bluetooth;
   if (!bluetooth) {
     throw new Error(
@@ -49,15 +61,29 @@ export async function connectBluetoothPrinter(showAll = false): Promise<string> 
         }
   );
 
-  const server = await device.gatt?.connect();
-  if (!server) throw new Error("Gagal terhubung ke printer.");
+  return connectToDevice(device);
+}
 
-  const characteristic = await findWritableCharacteristic(server);
+/**
+ * Coba sambung ulang otomatis ke printer yang udah pernah diizinkan sebelumnya,
+ * TANPA munculin picker/dialog pilih perangkat lagi. Butuh dukungan
+ * `navigator.bluetooth.getDevices()` (kebanyakan Chrome Android). Kalau gak
+ * didukung atau device gak ketemu, return null (biarin user connect manual sekali).
+ */
+export async function tryReconnectBluetoothPrinter(deviceId: string): Promise<string | null> {
+  const bluetooth = navigator.bluetooth;
+  if (!bluetooth || typeof bluetooth.getDevices !== "function") return null;
 
-  cachedDevice = device;
-  cachedCharacteristic = characteristic;
+  try {
+    const devices = await bluetooth.getDevices();
+    const device = devices.find((d) => d.id === deviceId);
+    if (!device) return null;
 
-  return device.name ?? "Printer Bluetooth";
+    const { name } = await connectToDevice(device);
+    return name;
+  } catch {
+    return null;
+  }
 }
 
 export function disconnectBluetoothPrinter() {

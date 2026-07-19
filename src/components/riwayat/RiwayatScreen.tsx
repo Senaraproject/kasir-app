@@ -180,12 +180,12 @@ export function RiwayatScreen({
         )}
       </div>
 
-      {/* Ringkasan metode pembayaran - klik buat filter */}
-      <div className="mb-4 flex flex-wrap gap-2">
+      {/* Ringkasan metode pembayaran - klik buat filter, bisa di-scroll ke samping */}
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
         <button
           onClick={() => setPaymentFilter("all")}
           className={clsx(
-            "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium",
+            "flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap",
             paymentFilter === "all"
               ? "border-blue-600 bg-blue-50 text-blue-700"
               : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -199,7 +199,7 @@ export function RiwayatScreen({
             key={p.method}
             onClick={() => setPaymentFilter(p.method)}
             className={clsx(
-              "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium",
+              "flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap",
               paymentFilter === p.method
                 ? "border-blue-600 bg-blue-50 text-blue-700"
                 : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
@@ -254,7 +254,7 @@ export function RiwayatScreen({
             />
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
                 <tr>
@@ -328,7 +328,7 @@ export function RiwayatScreen({
       )}
 
       {tab === "produk" && (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs font-medium uppercase text-slate-500">
               <tr>
