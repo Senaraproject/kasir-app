@@ -292,7 +292,7 @@ export function RiwayatScreen({
                         <td className="px-4 py-3">
                           <Badge tone="blue">{PAYMENT_LABELS[t.payment_method] ?? t.payment_method}</Badge>
                         </td>
-                        <td className="px-4 py-3 text-right font-medium">{formatRupiah(t.total)}</td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-900">{formatRupiah(t.total)}</td>
                         <td className="px-4 py-3">
                           {t.status === "dibatalkan" && <Badge tone="red">Dibatalkan</Badge>}
                         </td>
@@ -347,7 +347,7 @@ export function RiwayatScreen({
                     {p.name}
                   </td>
                   <td className="px-4 py-3 text-right text-slate-600">{p.qty}</td>
-                  <td className="px-4 py-3 text-right font-medium">{formatRupiah(p.revenue)}</td>
+                  <td className="px-4 py-3 text-right font-medium text-slate-900">{formatRupiah(p.revenue)}</td>
                 </tr>
               ))}
               {soldProducts.length === 0 && (

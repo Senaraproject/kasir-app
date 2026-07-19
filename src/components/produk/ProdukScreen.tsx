@@ -129,7 +129,7 @@ export function ProdukScreen({ initialProducts, initialCategories }: Props) {
                   {product.sku && <p className="text-xs text-slate-400">SKU: {product.sku}</p>}
                 </td>
                 <td className="px-4 py-3 text-slate-500">{product.category?.name ?? "-"}</td>
-                <td className="px-4 py-3 text-right font-medium">{formatRupiah(product.price)}</td>
+                <td className="px-4 py-3 text-right font-medium text-slate-900">{formatRupiah(product.price)}</td>
                 <td className="px-4 py-3 text-right text-slate-600">{product.stock}</td>
                 <td className="px-4 py-3">
                   <Badge tone={product.item_type === "addon" ? "amber" : product.item_type === "paket" ? "blue" : "slate"}>
