@@ -130,7 +130,12 @@ export function ProdukScreen({ initialProducts, initialCategories }: Props) {
                 </td>
                 <td className="px-4 py-3 text-slate-500">{product.category?.name ?? "-"}</td>
                 <td className="px-4 py-3 text-right font-medium text-slate-900">{formatRupiah(product.price)}</td>
-                <td className="px-4 py-3 text-right text-slate-600">{product.stock}</td>
+                <td className="px-4 py-3 text-right text-slate-600">
+                  {product.stock}
+                  {product.track_stock && (
+                    <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-green-500" title="Stok terlacak otomatis" />
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <Badge tone={product.item_type === "addon" ? "amber" : product.item_type === "paket" ? "blue" : "slate"}>
                     {ITEM_TYPE_LABELS[product.item_type]}

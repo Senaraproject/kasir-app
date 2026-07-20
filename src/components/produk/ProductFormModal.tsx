@@ -57,6 +57,7 @@ function ProductForm({
     cost_price: product ? String(product.cost_price) : "",
     stock: product ? String(product.stock) : "999999",
     item_type: product?.item_type ?? ("default" as ItemType),
+    track_stock: product?.track_stock ?? false,
   }));
   const [saving, setSaving] = useState(false);
 
@@ -74,6 +75,7 @@ function ProductForm({
       cost_price: Number(form.cost_price) || 0,
       stock: Number(form.stock) || 0,
       item_type: form.item_type,
+      track_stock: form.track_stock,
     };
 
     const { error } = product
@@ -176,10 +178,22 @@ function ProductForm({
           value={form.stock}
           onChange={(e) => setForm((f) => ({ ...f, stock: e.target.value }))}
         />
-        <p className="mt-1 text-xs text-slate-400">
-          Stok diisi & diperbarui manual, sistem gak otomatis menguranginya saat transaksi.
-        </p>
       </div>
+
+      <label className="flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={form.track_stock}
+          onChange={(e) => setForm((f) => ({ ...f, track_stock: e.target.checked }))}
+          className="h-4 w-4 rounded border-slate-300"
+        />
+        Lacak stok otomatis (berkurang tiap terjual, balik lagi kalau transaksi dibatalkan)
+      </label>
+      {!form.track_stock && (
+        <p className="-mt-2 text-xs text-slate-400">
+          Kalau gak dicentang, stok cuma angka manual - gak berubah otomatis saat ada transaksi.
+        </p>
+      )}
 
       <Button type="submit" className="w-full" disabled={saving}>
         {saving ? "Menyimpan..." : "Simpan Produk"}

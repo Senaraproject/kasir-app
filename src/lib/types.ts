@@ -48,6 +48,7 @@ export interface Product {
   cost_price: number;
   stock: number;
   low_stock_threshold: number;
+  track_stock: boolean;
   item_type: ItemType;
   image_url: string | null;
   is_active: boolean;

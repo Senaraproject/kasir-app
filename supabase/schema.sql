@@ -49,6 +49,7 @@ create table if not exists products (
   cost_price numeric(12,2) not null default 0,
   stock integer not null default 999999,
   low_stock_threshold integer not null default 5,
+  track_stock boolean not null default false,
   item_type text not null default 'default' check (item_type in ('default','addon','paket')),
   image_url text,
   is_active boolean not null default true,
@@ -140,9 +141,51 @@ create table if not exists store_settings (
 
 insert into store_settings (id) values (1) on conflict (id) do nothing;
 
--- Catatan: stok TIDAK dikelola otomatis oleh sistem (tidak ada trigger
--- pengurangan/pengembalian stok). Stok diisi & diperbarui manual lewat
--- halaman Produk, sesuai kebutuhan toko.
+-- Stok cuma dikelola otomatis buat produk dengan track_stock = true.
+-- Produk lain (default) stoknya murni manual lewat halaman Produk.
+create or replace function fn_apply_stock_on_sale()
+returns trigger as $$
+begin
+  update products set stock = greatest(0, stock - new.qty), updated_at = now()
+  where id = new.product_id and track_stock = true;
+
+  if found then
+    insert into stock_movements (product_id, change, reason, employee_id)
+    select new.product_id, -new.qty, 'penjualan', t.employee_id
+    from transactions t where t.id = new.transaction_id;
+  end if;
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists trg_apply_stock_on_sale on transaction_items;
+create trigger trg_apply_stock_on_sale
+  after insert on transaction_items
+  for each row execute function fn_apply_stock_on_sale();
+
+create or replace function fn_restore_stock_on_cancel()
+returns trigger as $$
+begin
+  if new.status = 'dibatalkan' and old.status <> 'dibatalkan' then
+    update products p set stock = p.stock + ti.qty, updated_at = now()
+    from transaction_items ti
+    where ti.transaction_id = new.id and ti.product_id = p.id and p.track_stock = true;
+
+    insert into stock_movements (product_id, change, reason, employee_id)
+    select ti.product_id, ti.qty, 'pembatalan', new.employee_id
+    from transaction_items ti
+    join products p on p.id = ti.product_id
+    where ti.transaction_id = new.id and p.track_stock = true;
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists trg_restore_stock_on_cancel on transactions;
+create trigger trg_restore_stock_on_cancel
+  after update on transactions
+  for each row execute function fn_restore_stock_on_cancel();
 
 -- ============================================================
 -- ROW LEVEL SECURITY
