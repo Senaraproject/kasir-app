@@ -134,18 +134,16 @@ export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
             </Link>
           );
         })}
-        {mobileMore.length > 0 && (
-          <button
-            onClick={() => setMoreOpen(true)}
-            className={clsx(
-              "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
-              isMoreActive ? "text-blue-600" : "text-slate-500"
-            )}
-          >
-            <MoreHorizontal size={20} />
-            Lainnya
-          </button>
-        )}
+        <button
+          onClick={() => setMoreOpen(true)}
+          className={clsx(
+            "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium",
+            isMoreActive ? "text-blue-600" : "text-slate-500"
+          )}
+        >
+          <MoreHorizontal size={20} />
+          Lainnya
+        </button>
       </nav>
 
       {/* Bottom sheet "Lainnya" - mobile */}
