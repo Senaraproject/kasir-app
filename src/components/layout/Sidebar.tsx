@@ -43,7 +43,15 @@ const NAV_ITEMS: NavItem[] = [
 // Berapa item yang tampil langsung di bottom nav mobile, sisanya masuk "Lainnya".
 const MOBILE_PRIMARY_COUNT = 3;
 
-export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
+export function Sidebar({
+  role,
+  fullName,
+  storeName,
+}: {
+  role: Role;
+  fullName: string;
+  storeName?: string | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [printerModalOpen, setPrinterModalOpen] = useState(false);
@@ -70,7 +78,10 @@ export function Sidebar({ role, fullName }: { role: Role; fullName: string }) {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
             <Store size={18} />
           </div>
-          <span className="font-semibold text-slate-900">Kasir App</span>
+          <div className="min-w-0 leading-tight">
+            <p className="truncate font-semibold text-slate-900">Kasir App</p>
+            {storeName && <p className="truncate text-xs text-slate-400">{storeName}</p>}
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">

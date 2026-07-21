@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Plus, Minus, Trash2, ShoppingCart, User, X, PackageOpen } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ShoppingCart, User, X, PackageOpen, ShoppingBag } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -23,6 +23,26 @@ const ITEM_TYPE_LABELS: Record<ItemType, string> = {
   addon: "Add On",
   paket: "Paket",
 };
+
+const DOT_COLORS = [
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-teal-500",
+  "bg-amber-500",
+  "bg-rose-500",
+  "bg-emerald-500",
+  "bg-cyan-500",
+  "bg-orange-500",
+  "bg-indigo-500",
+  "bg-pink-500",
+];
+
+function dotColorFor(categoryId: string | null): string {
+  const key = categoryId ?? "none";
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  return DOT_COLORS[hash % DOT_COLORS.length];
+}
 
 interface Props {
   initialProducts: Product[];
@@ -94,7 +114,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
       employee_id: employee.id,
       label: cart.items[0]?.name ? `${cart.items[0].name} dkk` : null,
       items: cart.items,
-      discount: cart.discount,
+      discount: cart.discountAmount(),
     });
     setHolding(false);
 
@@ -144,7 +164,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
           branch_id: employee.branch_id,
           customer_id: selectedCustomer?.id ?? null,
           subtotal,
-          discount: cart.discount,
+          discount: cart.discountAmount(),
           tax: 0,
           total,
           payment_method: payment.method,
@@ -292,16 +312,19 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
               <button
                 key={product.id}
                 onClick={() => cart.addItem(product)}
-                className="flex flex-col rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-transform active:scale-95"
+                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-3.5 text-left shadow-sm transition-all hover:border-blue-200 hover:shadow-md active:scale-95"
               >
-                {product.item_type !== "default" && (
-                  <span className="mb-1 w-fit rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                    {ITEM_TYPE_LABELS[product.item_type]}
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <span className={clsx("h-2 w-2 shrink-0 rounded-full", dotColorFor(product.category_id))} />
+                  <span className="line-clamp-1 flex-1 text-sm font-medium text-slate-900">
+                    {product.name}
                   </span>
-                )}
-                <span className="mb-1 line-clamp-2 text-sm font-medium text-slate-900">
-                  {product.name}
-                </span>
+                  {product.item_type !== "default" && (
+                    <span className="shrink-0 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                      {ITEM_TYPE_LABELS[product.item_type]}
+                    </span>
+                  )}
+                </div>
                 <span className="mt-auto text-sm font-semibold text-blue-600">
                   {formatRupiah(product.price)}
                 </span>
@@ -313,6 +336,10 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
               </p>
             )}
           </div>
+        </div>
+
+        <div className="hidden shrink-0 items-center justify-between border-t border-slate-200 bg-white px-4 py-2 text-xs text-slate-400 md:flex">
+          <span>Total {filteredProducts.length} produk</span>
         </div>
       </div>
 
@@ -367,7 +394,13 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
 
         <div className="flex-1 overflow-y-auto p-4">
           {cart.items.length === 0 ? (
-            <p className="py-10 text-center text-sm text-slate-400">Keranjang kosong</p>
+            <div className="flex flex-col items-center justify-center py-14 text-center">
+              <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+                <ShoppingBag size={28} className="text-blue-300" />
+              </div>
+              <p className="text-sm font-medium text-slate-600">Keranjang masih kosong</p>
+              <p className="mt-0.5 text-xs text-slate-400">Tambah produk untuk memulai transaksi</p>
+            </div>
           ) : (
             <ul className="space-y-3">
               {cart.items.map((item) => (
@@ -430,15 +463,29 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
           </div>
           <div className="flex items-center justify-between gap-2 text-sm">
             <span className="text-slate-500">Diskon</span>
-            <Input
-              type="number"
-              min={0}
-              className="h-8 w-32 text-right"
-              value={cart.discount || ""}
-              onChange={(e) => cart.setDiscount(Number(e.target.value) || 0)}
-              placeholder="0"
-            />
+            <div className="flex overflow-hidden rounded-lg border border-slate-300">
+              <Input
+                type="number"
+                min={0}
+                className="h-8 w-20 rounded-none border-none text-right shadow-none focus:ring-0"
+                value={cart.discount || ""}
+                onChange={(e) => cart.setDiscount(Number(e.target.value) || 0)}
+                placeholder="0"
+              />
+              <button
+                type="button"
+                onClick={() => cart.setDiscountType(cart.discountType === "amount" ? "percent" : "amount")}
+                className="shrink-0 border-l border-slate-300 bg-slate-50 px-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                {cart.discountType === "percent" ? "%" : "Rp"}
+              </button>
+            </div>
           </div>
+          {cart.discountType === "percent" && cart.discount > 0 && (
+            <div className="flex items-center justify-end text-xs text-slate-400">
+              -{formatRupiah(cart.discountAmount())}
+            </div>
+          )}
           <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-3 text-base font-semibold">
             <span>Total</span>
             <span className="text-blue-600">{formatRupiah(cart.total())}</span>

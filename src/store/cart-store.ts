@@ -8,24 +8,31 @@ export interface CartItem {
   qty: number;
 }
 
+export type DiscountType = "amount" | "percent";
+
 interface CartState {
   items: CartItem[];
+  /** Nilai input mentah - Rupiah kalau discountType "amount", angka persen kalau "percent". */
   discount: number;
+  discountType: DiscountType;
   addItem: (product: Product) => void;
   incrementItem: (productId: string) => void;
   decrementItem: (productId: string) => void;
   removeItem: (productId: string) => void;
   setQty: (productId: string, qty: number) => void;
   setDiscount: (discount: number) => void;
-  loadItems: (items: CartItem[], discount: number) => void;
+  setDiscountType: (type: DiscountType) => void;
+  loadItems: (items: CartItem[], discountAmount: number) => void;
   clear: () => void;
   subtotal: () => number;
+  discountAmount: () => number;
   total: () => number;
 }
 
 export const useCartStore = create<CartState>((set, get) => ({
   items: [],
   discount: 0,
+  discountType: "amount",
 
   addItem: (product) =>
     set((state) => {
@@ -80,11 +87,20 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   setDiscount: (discount) => set({ discount: Math.max(0, discount) }),
 
-  loadItems: (items, discount) => set({ items, discount }),
+  setDiscountType: (discountType) => set({ discountType }),
 
-  clear: () => set({ items: [], discount: 0 }),
+  loadItems: (items, discountAmount) => set({ items, discount: discountAmount, discountType: "amount" }),
+
+  clear: () => set({ items: [], discount: 0, discountType: "amount" }),
 
   subtotal: () => get().items.reduce((sum, i) => sum + i.price * i.qty, 0),
 
-  total: () => Math.max(0, get().subtotal() - get().discount),
+  discountAmount: () => {
+    const { discount, discountType } = get();
+    const subtotal = get().subtotal();
+    const amount = discountType === "percent" ? (subtotal * discount) / 100 : discount;
+    return Math.min(Math.max(0, amount), subtotal);
+  },
+
+  total: () => Math.max(0, get().subtotal() - get().discountAmount()),
 }));
