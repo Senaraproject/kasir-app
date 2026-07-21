@@ -24,26 +24,6 @@ const ITEM_TYPE_LABELS: Record<ItemType, string> = {
   paket: "Paket",
 };
 
-const DOT_COLORS = [
-  "bg-blue-500",
-  "bg-purple-500",
-  "bg-teal-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-emerald-500",
-  "bg-cyan-500",
-  "bg-orange-500",
-  "bg-indigo-500",
-  "bg-pink-500",
-];
-
-function dotColorFor(categoryId: string | null): string {
-  const key = categoryId ?? "none";
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-  return DOT_COLORS[hash % DOT_COLORS.length];
-}
-
 interface Props {
   initialProducts: Product[];
   categories: Category[];
@@ -315,7 +295,6 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                 className="flex flex-col rounded-2xl border border-slate-200 bg-white p-3.5 text-left shadow-sm transition-all hover:border-blue-200 hover:shadow-md active:scale-95"
               >
                 <div className="mb-1.5 flex items-center gap-1.5">
-                  <span className={clsx("h-2 w-2 shrink-0 rounded-full", dotColorFor(product.category_id))} />
                   <span className="line-clamp-1 flex-1 text-sm font-medium text-slate-900">
                     {product.name}
                   </span>
