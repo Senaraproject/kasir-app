@@ -152,12 +152,14 @@ export function RiwayatScreen({
           <ChevronLeft size={18} />
         </button>
 
-        <div className="flex flex-1 items-center justify-center gap-2">
-          <CalendarDays size={16} className="text-slate-400" />
-          <span className="text-sm font-semibold text-slate-800">{formatDayLabel(selectedDay)}</span>
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5">
+          <CalendarDays size={16} className="hidden shrink-0 text-slate-400 sm:block" />
+          <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-800">
+            {formatDayLabel(selectedDay)}
+          </span>
           <Input
             type="date"
-            className="h-8 w-auto border-none bg-transparent px-1 text-xs text-slate-400 shadow-none"
+            className="h-8 w-[110px] shrink-0 border-none bg-transparent px-1 text-xs text-slate-400 shadow-none"
             value={selectedDay}
             max={toDateInputValue(new Date())}
             onChange={(e) => changeDay(e.target.value)}
