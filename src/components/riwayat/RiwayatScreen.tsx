@@ -143,37 +143,43 @@ export function RiwayatScreen({
     <div className="mx-auto max-w-4xl p-4 md:p-6">
       <h1 className="mb-6 text-xl font-semibold text-slate-900">Riwayat Transaksi</h1>
 
-      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
-        <button
-          onClick={() => changeDay(addDays(selectedDay, -1))}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
-          title="Hari sebelumnya"
-        >
-          <ChevronLeft size={18} />
-        </button>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3">
+        <div className="flex min-w-0 items-center gap-1">
+          <button
+            onClick={() => changeDay(addDays(selectedDay, -1))}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+            title="Hari sebelumnya"
+          >
+            <ChevronLeft size={18} />
+          </button>
 
-        <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5">
-          <CalendarDays size={16} className="hidden shrink-0 text-slate-400 sm:block" />
-          <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-slate-800">
+          <span className="min-w-0 truncate whitespace-nowrap px-1 text-sm font-semibold text-slate-800">
             {formatDayLabel(selectedDay)}
           </span>
-          <Input
-            type="date"
-            className="h-8 w-[110px] shrink-0 border-none bg-transparent px-1 text-xs text-slate-400 shadow-none"
-            value={selectedDay}
-            max={toDateInputValue(new Date())}
-            onChange={(e) => changeDay(e.target.value)}
-          />
-        </div>
 
-        <button
-          onClick={() => changeDay(addDays(selectedDay, 1))}
-          disabled={isToday}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-          title="Hari berikutnya"
-        >
-          <ChevronRight size={18} />
-        </button>
+          <button
+            onClick={() => changeDay(addDays(selectedDay, 1))}
+            disabled={isToday}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+            title="Hari berikutnya"
+          >
+            <ChevronRight size={18} />
+          </button>
+
+          <div
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
+            title="Pilih tanggal"
+          >
+            <CalendarDays size={16} />
+            <input
+              type="date"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              value={selectedDay}
+              max={toDateInputValue(new Date())}
+              onChange={(e) => changeDay(e.target.value)}
+            />
+          </div>
+        </div>
 
         {!isToday && (
           <Button variant="outline" size="sm" onClick={() => changeDay(toDateInputValue(new Date()))}>
