@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import clsx from "clsx";
-import { Search, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, CalendarDays, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatRupiah } from "@/lib/utils/currency";
 import { PAYMENT_LABELS } from "@/lib/printer/receipt";
@@ -181,11 +181,22 @@ export function RiwayatScreen({
           </div>
         </div>
 
-        {!isToday && (
-          <Button variant="outline" size="sm" onClick={() => changeDay(toDateInputValue(new Date()))}>
-            Hari Ini
-          </Button>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={() => loadDay(selectedDay)}
+            disabled={loading}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 disabled:opacity-50"
+            title="Refresh"
+          >
+            <RefreshCw size={18} className={clsx(loading && "animate-spin")} />
+          </button>
+
+          {!isToday && (
+            <Button variant="outline" size="sm" onClick={() => changeDay(toDateInputValue(new Date()))}>
+              Hari Ini
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Ringkasan metode pembayaran - klik buat filter, bisa di-scroll ke samping */}
