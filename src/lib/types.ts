@@ -9,7 +9,8 @@ export type PaymentMethod =
   | "debit"
   | "kredit"
   | "transfer"
-  | "ewallet";
+  | "ewallet"
+  | "ceo";
 export type TransactionStatus = "selesai" | "dibatalkan";
 export type ItemType = "default" | "addon" | "paket";
 

@@ -10,7 +10,7 @@ import { PAYMENT_LABELS } from "@/lib/printer/receipt";
 import { SalesChart } from "@/components/laporan/SalesChart";
 import type { Transaction } from "@/lib/types";
 
-type RangePreset = "today" | "7d" | "30d" | "month";
+type RangePreset = "today" | "7d" | "30d" | "month" | "custom";
 
 const PRESETS: { key: RangePreset; label: string; days: number | "month" }[] = [
   { key: "today", label: "Hari Ini", days: 0 },
@@ -19,10 +19,20 @@ const PRESETS: { key: RangePreset; label: string; days: number | "month" }[] = [
   { key: "month", label: "Bulan Ini", days: "month" },
 ];
 
+const MONTH_NAMES = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+];
+
 export function LaporanScreen({ initialTransactions }: { initialTransactions: Transaction[] }) {
+  const now = new Date();
   const [transactions, setTransactions] = useState(initialTransactions);
   const [preset, setPreset] = useState<RangePreset>("30d");
   const [loading, setLoading] = useState(false);
+  const [customMonth, setCustomMonth] = useState(now.getMonth());
+  const [customYear, setCustomYear] = useState(now.getFullYear());
+
+  const YEARS = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
 
   async function loadRange(p: RangePreset) {
     setPreset(p);
@@ -43,6 +53,28 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
       .select("*, items:transaction_items(*), employee:employees(full_name), customer:customers(name)")
       .eq("status", "selesai")
       .gte("created_at", from.toISOString())
+      .order("created_at", { ascending: false });
+
+    setTransactions(data ?? []);
+    setLoading(false);
+  }
+
+  async function loadCustomMonth(monthIdx: number, year: number) {
+    setPreset("custom");
+    setCustomMonth(monthIdx);
+    setCustomYear(year);
+    setLoading(true);
+    const supabase = createClient();
+
+    const from = new Date(year, monthIdx, 1, 0, 0, 0, 0);
+    const to = new Date(year, monthIdx + 1, 0, 23, 59, 59, 999);
+
+    const { data } = await supabase
+      .from("transactions")
+      .select("*, items:transaction_items(*), employee:employees(full_name), customer:customers(name)")
+      .eq("status", "selesai")
+      .gte("created_at", from.toISOString())
+      .lte("created_at", to.toISOString())
       .order("created_at", { ascending: false });
 
     setTransactions(data ?? []);
@@ -98,7 +130,7 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
     <div className="mx-auto max-w-5xl p-4 md:p-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-slate-900">Laporan Penjualan</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map((p) => (
             <button
               key={p.key}
@@ -111,6 +143,42 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
               {p.label}
             </button>
           ))}
+
+          <div
+            className={clsx(
+              "flex items-center gap-1 rounded-full px-2 py-1",
+              preset === "custom" ? "bg-blue-600" : "bg-slate-100"
+            )}
+          >
+            <select
+              value={customMonth}
+              onChange={(e) => loadCustomMonth(Number(e.target.value), customYear)}
+              className={clsx(
+                "cursor-pointer rounded-full bg-transparent py-0.5 pl-2 pr-1 text-sm font-medium outline-none",
+                preset === "custom" ? "text-white" : "text-slate-600"
+              )}
+            >
+              {MONTH_NAMES.map((name, i) => (
+                <option key={i} value={i} className="text-slate-900">
+                  {name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={customYear}
+              onChange={(e) => loadCustomMonth(customMonth, Number(e.target.value))}
+              className={clsx(
+                "cursor-pointer rounded-full bg-transparent py-0.5 pl-1 pr-2 text-sm font-medium outline-none",
+                preset === "custom" ? "text-white" : "text-slate-600"
+              )}
+            >
+              {YEARS.map((y) => (
+                <option key={y} value={y} className="text-slate-900">
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

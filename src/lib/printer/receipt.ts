@@ -13,6 +13,7 @@ export const PAYMENT_LABELS: Record<string, string> = {
   kredit: "Kartu Kredit",
   transfer: "Transfer Bank",
   ewallet: "E-Wallet Lainnya",
+  ceo: "CEO",
 };
 
 function truncate(text: string, max: number) {

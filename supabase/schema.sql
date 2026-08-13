@@ -92,7 +92,7 @@ create table if not exists transactions (
   discount numeric(12,2) not null default 0,
   tax numeric(12,2) not null default 0,
   total numeric(12,2) not null default 0,
-  payment_method text not null check (payment_method in ('tunai','qris','gopay','ovo','dana','shopeepay','debit','kredit','transfer','ewallet')),
+  payment_method text not null check (payment_method in ('tunai','qris','gopay','ovo','dana','shopeepay','debit','kredit','transfer','ewallet','ceo')),
   cash_received numeric(12,2),
   change_amount numeric(12,2),
   note text,

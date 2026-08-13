@@ -20,6 +20,7 @@ const METHODS: PaymentMethod[] = [
   "kredit",
   "transfer",
   "ewallet",
+  "ceo",
 ];
 const QUICK_AMOUNTS = [0, 5000, 10000, 20000, 50000, 100000];
 
