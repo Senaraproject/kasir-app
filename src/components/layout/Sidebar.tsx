@@ -31,7 +31,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/kasir", label: "Kasir", icon: ShoppingCart, roles: ["admin", "kasir"] },
+  { href: "/kasir", label: "Kasir", icon: ShoppingCart, roles: ["owner", "admin", "kasir"] },
   { href: "/riwayat", label: "Riwayat", icon: History, roles: ["owner", "admin", "kasir"] },
   { href: "/member", label: "Member", icon: Contact, roles: ["owner", "admin", "kasir"] },
   { href: "/produk", label: "Produk", icon: Package, roles: ["owner", "admin"] },
@@ -59,8 +59,10 @@ export function Sidebar({
   useAutoReconnectPrinter();
 
   const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
-  const mobilePrimary = items.slice(0, MOBILE_PRIMARY_COUNT);
-  const mobileMore = items.slice(MOBILE_PRIMARY_COUNT);
+  // Owner gak butuh ngasir di HP - fokus admin doang di mobile, Kasir cuma muncul di layar PC.
+  const mobileItems = items.filter((item) => !(role === "owner" && item.href === "/kasir"));
+  const mobilePrimary = mobileItems.slice(0, MOBILE_PRIMARY_COUNT);
+  const mobileMore = mobileItems.slice(MOBILE_PRIMARY_COUNT);
   const isMoreActive = mobileMore.some((item) => pathname.startsWith(item.href));
 
   async function handleLogout() {
