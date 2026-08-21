@@ -58,6 +58,7 @@ function ProductForm({
     stock: product ? String(product.stock) : "999999",
     item_type: product?.item_type ?? ("default" as ItemType),
     track_stock: product?.track_stock ?? false,
+    has_rice_option: product?.has_rice_option ?? false,
   }));
   const [saving, setSaving] = useState(false);
 
@@ -76,6 +77,7 @@ function ProductForm({
       stock: Number(form.stock) || 0,
       item_type: form.item_type,
       track_stock: form.track_stock,
+      has_rice_option: form.has_rice_option,
     };
 
     const { error } = product
@@ -194,6 +196,16 @@ function ProductForm({
           Kalau gak dicentang, stok cuma angka manual - gak berubah otomatis saat ada transaksi.
         </p>
       )}
+
+      <label className="flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={form.has_rice_option}
+          onChange={(e) => setForm((f) => ({ ...f, has_rice_option: e.target.checked }))}
+          className="h-4 w-4 rounded border-slate-300"
+        />
+        Ada pilihan nasi (Nasi Putih / Nasi Daun Jeruk) saat ditambah ke keranjang
+      </label>
 
       <Button type="submit" className="w-full" disabled={saving}>
         {saving ? "Menyimpan..." : "Simpan Produk"}

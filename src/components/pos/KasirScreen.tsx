@@ -24,6 +24,17 @@ const ITEM_TYPE_LABELS: Record<ItemType, string> = {
   paket: "Paket",
 };
 
+const RICE_OPTION_LABELS: Record<"putih" | "daun_jeruk", string> = {
+  putih: "Nasi Putih",
+  daun_jeruk: "Nasi Daun Jeruk",
+};
+
+function cartItemDisplayName(item: { name: string; hasRiceOption?: boolean; riceOption?: "putih" | "daun_jeruk" }) {
+  if (!item.hasRiceOption) return item.name;
+  const riceLabel = RICE_OPTION_LABELS[item.riceOption ?? "putih"];
+  return `${item.name} (${riceLabel})`;
+}
+
 interface Props {
   initialProducts: Product[];
   categories: Category[];
@@ -92,7 +103,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
     const { error } = await supabase.from("held_orders").insert({
       branch_id: employee.branch_id,
       employee_id: employee.id,
-      label: cart.items[0]?.name ? `${cart.items[0].name} dkk` : null,
+      label: cart.items[0] ? `${cartItemDisplayName(cart.items[0])} dkk` : null,
       items: cart.items,
       discount: cart.discountAmount(),
     });
@@ -162,7 +173,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
       const items = cart.items.map((item) => ({
         transaction_id: transaction.id,
         product_id: item.productId,
-        product_name: item.name,
+        product_name: cartItemDisplayName(item),
         price: item.price,
         qty: item.qty,
         subtotal: item.price * item.qty,
@@ -303,6 +314,11 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                       {ITEM_TYPE_LABELS[product.item_type]}
                     </span>
                   )}
+                  {product.has_rice_option && (
+                    <span className="shrink-0 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                      Pilih Nasi
+                    </span>
+                  )}
                 </div>
                 <span className="mt-auto text-sm font-semibold text-blue-600">
                   {formatRupiah(product.price)}
@@ -383,32 +399,53 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
           ) : (
             <ul className="space-y-3">
               {cart.items.map((item) => (
-                <li key={item.productId} className="flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-900">{item.name}</p>
-                    <p className="text-xs text-slate-500">{formatRupiah(item.price)}</p>
-                  </div>
-                  <div className="flex items-center gap-1">
+                <li key={item.productId} className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-900">{item.name}</p>
+                      <p className="text-xs text-slate-500">{formatRupiah(item.price)}</p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => cart.decrementItem(item.productId)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="w-6 text-center text-sm font-medium">{item.qty}</span>
+                      <button
+                        onClick={() => cart.incrementItem(item.productId)}
+                        className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
                     <button
-                      onClick={() => cart.decrementItem(item.productId)}
-                      className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      onClick={() => cart.removeItem(item.productId)}
+                      className="text-slate-400 hover:text-red-600"
                     >
-                      <Minus size={14} />
-                    </button>
-                    <span className="w-6 text-center text-sm font-medium">{item.qty}</span>
-                    <button
-                      onClick={() => cart.incrementItem(item.productId)}
-                      className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    >
-                      <Plus size={14} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
-                  <button
-                    onClick={() => cart.removeItem(item.productId)}
-                    className="text-slate-400 hover:text-red-600"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+
+                  {item.hasRiceOption && (
+                    <div className="flex gap-1.5 pl-0.5">
+                      {(Object.keys(RICE_OPTION_LABELS) as (keyof typeof RICE_OPTION_LABELS)[]).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => cart.setRiceOption(item.productId, opt)}
+                          className={clsx(
+                            "rounded-full border px-2.5 py-1 text-xs font-medium",
+                            (item.riceOption ?? "putih") === opt
+                              ? "border-amber-500 bg-amber-50 text-amber-700"
+                              : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                          )}
+                        >
+                          {RICE_OPTION_LABELS[opt]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

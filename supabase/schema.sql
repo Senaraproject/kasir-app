@@ -50,6 +50,7 @@ create table if not exists products (
   stock integer not null default 999999,
   low_stock_threshold integer not null default 5,
   track_stock boolean not null default false,
+  has_rice_option boolean not null default false,
   item_type text not null default 'default' check (item_type in ('default','addon','paket')),
   image_url text,
   is_active boolean not null default true,

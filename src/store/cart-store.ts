@@ -1,11 +1,15 @@
 import { create } from "zustand";
 import type { Product } from "@/lib/types";
 
+export type RiceOption = "putih" | "daun_jeruk";
+
 export interface CartItem {
   productId: string;
   name: string;
   price: number;
   qty: number;
+  hasRiceOption?: boolean;
+  riceOption?: RiceOption;
 }
 
 export type DiscountType = "amount" | "percent";
@@ -20,6 +24,7 @@ interface CartState {
   decrementItem: (productId: string) => void;
   removeItem: (productId: string) => void;
   setQty: (productId: string, qty: number) => void;
+  setRiceOption: (productId: string, option: RiceOption) => void;
   setDiscount: (discount: number) => void;
   setDiscountType: (type: DiscountType) => void;
   loadItems: (items: CartItem[], discountAmount: number) => void;
@@ -52,6 +57,8 @@ export const useCartStore = create<CartState>((set, get) => ({
             name: product.name,
             price: product.price,
             qty: 1,
+            hasRiceOption: product.has_rice_option,
+            riceOption: product.has_rice_option ? ("putih" as const) : undefined,
           },
         ],
       };
@@ -83,6 +90,11 @@ export const useCartStore = create<CartState>((set, get) => ({
       items: state.items
         .map((i) => (i.productId === productId ? { ...i, qty: Math.max(qty, 0) } : i))
         .filter((i) => i.qty > 0),
+    })),
+
+  setRiceOption: (productId, option) =>
+    set((state) => ({
+      items: state.items.map((i) => (i.productId === productId ? { ...i, riceOption: option } : i)),
     })),
 
   setDiscount: (discount) => set({ discount: Math.max(0, discount) }),

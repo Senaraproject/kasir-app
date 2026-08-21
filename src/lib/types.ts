@@ -50,6 +50,7 @@ export interface Product {
   stock: number;
   low_stock_threshold: number;
   track_stock: boolean;
+  has_rice_option: boolean;
   item_type: ItemType;
   image_url: string | null;
   is_active: boolean;
@@ -103,7 +104,14 @@ export interface HeldOrder {
   branch_id: string | null;
   employee_id: string | null;
   label: string | null;
-  items: { productId: string; name: string; price: number; qty: number }[];
+  items: {
+    productId: string;
+    name: string;
+    price: number;
+    qty: number;
+    hasRiceOption?: boolean;
+    riceOption?: "putih" | "daun_jeruk";
+  }[];
   discount: number;
   note: string | null;
   created_at: string;

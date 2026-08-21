@@ -1,9 +1,11 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireEmployee } from "@/lib/supabase/auth";
 import { KasirScreen } from "@/components/pos/KasirScreen";
 
 export default async function KasirPage() {
   const employee = await requireEmployee();
+  if (employee.role === "owner") redirect("/laporan");
   const supabase = await createClient();
 
   const [{ data: products }, { data: categories }, { data: storeSettings }] = await Promise.all([

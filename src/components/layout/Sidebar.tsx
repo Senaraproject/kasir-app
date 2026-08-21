@@ -31,7 +31,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/kasir", label: "Kasir", icon: ShoppingCart, roles: ["owner", "admin", "kasir"] },
+  { href: "/kasir", label: "Kasir", icon: ShoppingCart, roles: ["admin", "kasir"] },
   { href: "/riwayat", label: "Riwayat", icon: History, roles: ["owner", "admin", "kasir"] },
   { href: "/member", label: "Member", icon: Contact, roles: ["owner", "admin", "kasir"] },
   { href: "/produk", label: "Produk", icon: Package, roles: ["owner", "admin"] },
