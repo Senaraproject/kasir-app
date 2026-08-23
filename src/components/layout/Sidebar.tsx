@@ -43,6 +43,9 @@ const NAV_ITEMS: NavItem[] = [
 // Berapa item yang tampil langsung di bottom nav mobile, sisanya masuk "Lainnya".
 const MOBILE_PRIMARY_COUNT = 3;
 
+// Owner gak ngasir di HP, jadi urutan bottom nav-nya diganti fokus ke Riwayat/Laporan/Produk.
+const OWNER_MOBILE_PRIMARY_HREFS = ["/riwayat", "/laporan", "/produk"];
+
 export function Sidebar({
   role,
   fullName,
@@ -59,10 +62,21 @@ export function Sidebar({
   useAutoReconnectPrinter();
 
   const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
-  // Owner gak butuh ngasir di HP - fokus admin doang di mobile, Kasir cuma muncul di layar PC.
-  const mobileItems = items.filter((item) => !(role === "owner" && item.href === "/kasir"));
-  const mobilePrimary = mobileItems.slice(0, MOBILE_PRIMARY_COUNT);
-  const mobileMore = mobileItems.slice(MOBILE_PRIMARY_COUNT);
+
+  let mobilePrimary: NavItem[];
+  let mobileMore: NavItem[];
+  if (role === "owner") {
+    // Owner gak butuh ngasir di HP - Kasir cuma muncul di layar PC, bottom nav fokus admin.
+    mobilePrimary = OWNER_MOBILE_PRIMARY_HREFS
+      .map((href) => items.find((item) => item.href === href))
+      .filter((item): item is NavItem => Boolean(item));
+    mobileMore = items.filter(
+      (item) => item.href !== "/kasir" && !OWNER_MOBILE_PRIMARY_HREFS.includes(item.href)
+    );
+  } else {
+    mobilePrimary = items.slice(0, MOBILE_PRIMARY_COUNT);
+    mobileMore = items.slice(MOBILE_PRIMARY_COUNT);
+  }
   const isMoreActive = mobileMore.some((item) => pathname.startsWith(item.href));
 
   async function handleLogout() {

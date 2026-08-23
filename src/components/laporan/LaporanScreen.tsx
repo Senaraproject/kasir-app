@@ -10,14 +10,27 @@ import { PAYMENT_LABELS } from "@/lib/printer/receipt";
 import { SalesChart } from "@/components/laporan/SalesChart";
 import type { Transaction } from "@/lib/types";
 
-type RangePreset = "today" | "7d" | "30d" | "month" | "custom";
+type RangePreset = "today" | "yesterday" | "2d" | "7d" | "month" | "custom";
 
-const PRESETS: { key: RangePreset; label: string; days: number | "month" }[] = [
-  { key: "today", label: "Hari Ini", days: 0 },
-  { key: "7d", label: "7 Hari", days: 6 },
-  { key: "30d", label: "30 Hari", days: 29 },
-  { key: "month", label: "Bulan Ini", days: "month" },
+const PRESETS: { key: RangePreset; label: string }[] = [
+  { key: "today", label: "Hari Ini" },
+  { key: "yesterday", label: "Kemarin" },
+  { key: "2d", label: "2 Hari Lalu" },
+  { key: "7d", label: "7 Hari" },
+  { key: "month", label: "Bulan Ini" },
 ];
+
+function startOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function endOfDay(d: Date) {
+  const x = new Date(d);
+  x.setHours(23, 59, 59, 999);
+  return x;
+}
 
 const MONTH_NAMES = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -27,7 +40,7 @@ const MONTH_NAMES = [
 export function LaporanScreen({ initialTransactions }: { initialTransactions: Transaction[] }) {
   const now = new Date();
   const [transactions, setTransactions] = useState(initialTransactions);
-  const [preset, setPreset] = useState<RangePreset>("30d");
+  const [preset, setPreset] = useState<RangePreset>("today");
   const [loading, setLoading] = useState(false);
   const [customMonth, setCustomMonth] = useState(now.getMonth());
   const [customYear, setCustomYear] = useState(now.getFullYear());
@@ -39,21 +52,46 @@ export function LaporanScreen({ initialTransactions }: { initialTransactions: Tr
     setLoading(true);
     const supabase = createClient();
 
-    const from = new Date();
-    if (p === "month") {
-      from.setDate(1);
-    } else {
-      const cfg = PRESETS.find((x) => x.key === p)!;
-      from.setDate(from.getDate() - (cfg.days as number));
-    }
-    from.setHours(0, 0, 0, 0);
+    const today = new Date();
+    let from: Date;
+    let to: Date | null = null;
 
-    const { data } = await supabase
+    switch (p) {
+      case "yesterday": {
+        const d = new Date(today);
+        d.setDate(d.getDate() - 1);
+        from = startOfDay(d);
+        to = endOfDay(d);
+        break;
+      }
+      case "2d": {
+        const d = new Date(today);
+        d.setDate(d.getDate() - 2);
+        from = startOfDay(d);
+        to = endOfDay(d);
+        break;
+      }
+      case "7d": {
+        const d = new Date(today);
+        d.setDate(d.getDate() - 6);
+        from = startOfDay(d);
+        break;
+      }
+      case "month":
+        from = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0, 0);
+        break;
+      default:
+        from = startOfDay(today);
+    }
+
+    let query = supabase
       .from("transactions")
       .select("*, items:transaction_items(*), employee:employees(full_name), customer:customers(name)")
       .eq("status", "selesai")
-      .gte("created_at", from.toISOString())
-      .order("created_at", { ascending: false });
+      .gte("created_at", from.toISOString());
+    if (to) query = query.lte("created_at", to.toISOString());
+
+    const { data } = await query.order("created_at", { ascending: false });
 
     setTransactions(data ?? []);
     setLoading(false);

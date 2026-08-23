@@ -82,7 +82,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
     if (employee.role !== "owner") return;
     Promise.resolve().then(() => {
       if (window.innerWidth < 768) {
-        router.replace("/laporan");
+        router.replace("/riwayat");
       } else {
         setCheckingOwnerMobile(false);
       }
