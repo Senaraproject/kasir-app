@@ -108,6 +108,7 @@ export interface HeldOrder {
     productId: string;
     name: string;
     price: number;
+    basePrice?: number;
     qty: number;
     hasRiceOption?: boolean;
     riceOption?: "putih" | "daun_jeruk";

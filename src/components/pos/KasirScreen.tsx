@@ -6,7 +6,7 @@ import { Search, Plus, Minus, Trash2, ShoppingCart, User, X, PackageOpen, Shoppi
 import clsx from "clsx";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { useCartStore } from "@/store/cart-store";
+import { useCartStore, RICE_SURCHARGE } from "@/store/cart-store";
 import { usePrinterStore } from "@/store/printer-store";
 import { formatRupiah } from "@/lib/utils/currency";
 import { generateTransactionNumber } from "@/lib/utils/transaction-number";
@@ -459,6 +459,9 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                           )}
                         >
                           {RICE_OPTION_LABELS[opt]}
+                          {opt === "daun_jeruk" && (
+                            <span className="ml-1 text-amber-600">+{formatRupiah(RICE_SURCHARGE)}</span>
+                          )}
                         </button>
                       ))}
                     </div>

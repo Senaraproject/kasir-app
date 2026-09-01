@@ -3,10 +3,15 @@ import type { Product } from "@/lib/types";
 
 export type RiceOption = "putih" | "daun_jeruk";
 
+/** Tambahan harga kalau pilih nasi daun jeruk di produk yang punya opsi nasi (mis. Naslur). */
+export const RICE_SURCHARGE = 2000;
+
 export interface CartItem {
   productId: string;
   name: string;
   price: number;
+  /** Harga asli produk sebelum ditambah surcharge nasi daun jeruk. */
+  basePrice?: number;
   qty: number;
   hasRiceOption?: boolean;
   riceOption?: RiceOption;
@@ -56,6 +61,7 @@ export const useCartStore = create<CartState>((set, get) => ({
             productId: product.id,
             name: product.name,
             price: product.price,
+            basePrice: product.price,
             qty: 1,
             hasRiceOption: product.has_rice_option,
             riceOption: product.has_rice_option ? ("putih" as const) : undefined,
@@ -94,7 +100,16 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   setRiceOption: (productId, option) =>
     set((state) => ({
-      items: state.items.map((i) => (i.productId === productId ? { ...i, riceOption: option } : i)),
+      items: state.items.map((i) => {
+        if (i.productId !== productId) return i;
+        const base = i.basePrice ?? i.price;
+        return {
+          ...i,
+          basePrice: base,
+          riceOption: option,
+          price: option === "daun_jeruk" ? base + RICE_SURCHARGE : base,
+        };
+      }),
     })),
 
   setDiscount: (discount) => set({ discount: Math.max(0, discount) }),
