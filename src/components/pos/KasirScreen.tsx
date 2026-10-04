@@ -337,6 +337,11 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                     </span>
                   )}
                 </div>
+                {product.description && (
+                  <span className="mb-1.5 line-clamp-3 text-xs leading-snug text-slate-500">
+                    {product.description}
+                  </span>
+                )}
                 <span className="mt-auto text-sm font-semibold text-blue-600">
                   {formatRupiah(product.price)}
                 </span>

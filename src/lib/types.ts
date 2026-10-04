@@ -51,6 +51,7 @@ export interface Product {
   low_stock_threshold: number;
   track_stock: boolean;
   has_rice_option: boolean;
+  description: string | null;
   item_type: ItemType;
   image_url: string | null;
   is_active: boolean;

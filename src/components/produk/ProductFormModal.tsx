@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { Input, Label, Select } from "@/components/ui/Input";
+import { Input, Label, Select, Textarea } from "@/components/ui/Input";
 import type { Category, ItemType, Product } from "@/lib/types";
 
 const ITEM_TYPE_LABELS: Record<ItemType, string> = {
@@ -59,6 +59,7 @@ function ProductForm({
     item_type: product?.item_type ?? ("default" as ItemType),
     track_stock: product?.track_stock ?? false,
     has_rice_option: product?.has_rice_option ?? false,
+    description: product?.description ?? "",
   }));
   const [saving, setSaving] = useState(false);
 
@@ -78,6 +79,7 @@ function ProductForm({
       item_type: form.item_type,
       track_stock: form.track_stock,
       has_rice_option: form.has_rice_option,
+      description: form.description.trim() || null,
     };
 
     const { error } = product
@@ -170,6 +172,16 @@ function ProductForm({
             </option>
           ))}
         </Select>
+      </div>
+
+      <div>
+        <Label>Rincian Isi (opsional, buat paket promo)</Label>
+        <Textarea
+          rows={3}
+          value={form.description}
+          onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          placeholder="Contoh: Naslur Cumi + Naslur Cakalang + 2 Teh Pucuk"
+        />
       </div>
 
       <div>
