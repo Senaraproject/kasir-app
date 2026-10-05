@@ -92,6 +92,11 @@ export function buildReceiptBytes(
 
   for (const item of transaction.items ?? []) {
     e = e.line(truncate(item.product_name, itemColW));
+    if (item.item_description) {
+      for (const line of wrapText(item.item_description, columns - 2)) {
+        e = e.line(`  ${line}`);
+      }
+    }
     e = e.table(
       [
         { width: columns - 14, align: "left" },
@@ -206,6 +211,11 @@ export function buildKitchenReceiptBytes(
 
   for (const item of transaction.items ?? []) {
     e = e.bold(true).line(`${item.qty}x ${item.product_name}`).bold(false);
+    if (item.item_description) {
+      for (const line of wrapText(item.item_description, columns - 2)) {
+        e = e.line(`  ${line}`);
+      }
+    }
   }
 
   if (transaction.note) {

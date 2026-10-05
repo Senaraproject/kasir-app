@@ -189,6 +189,7 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         transaction_id: transaction.id,
         product_id: item.productId,
         product_name: cartItemDisplayName(item),
+        item_description: products.find((p) => p.id === item.productId)?.description ?? null,
         price: item.price,
         qty: item.qty,
         subtotal: item.price * item.qty,

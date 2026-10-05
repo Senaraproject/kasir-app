@@ -124,6 +124,7 @@ export interface TransactionItem {
   transaction_id: string;
   product_id: string | null;
   product_name: string;
+  item_description: string | null;
   price: number;
   qty: number;
   subtotal: number;

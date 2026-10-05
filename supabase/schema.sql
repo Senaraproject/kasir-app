@@ -123,6 +123,7 @@ create table if not exists transaction_items (
   transaction_id uuid not null references transactions(id) on delete cascade,
   product_id uuid references products(id) on delete set null,
   product_name text not null,
+  item_description text,
   price numeric(12,2) not null,
   qty integer not null,
   subtotal numeric(12,2) not null
