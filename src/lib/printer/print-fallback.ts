@@ -2,8 +2,17 @@ import { formatRupiah } from "@/lib/utils/currency";
 import { PAYMENT_LABELS } from "@/lib/printer/receipt";
 import type { StoreSettings, Transaction } from "@/lib/types";
 
+/** Perkiraan lebar kertas fisik dari setting kolom printer - dipakai biar dialog print
+ * browser gak nyetak di ukuran kertas A4/Letter default, melainkan sesuai struk thermal. */
+function columnsToPaperWidthMm(columns: 32 | 42 | 48): number {
+  if (columns <= 32) return 58;
+  if (columns >= 48) return 80;
+  return 70;
+}
+
 /** Cetak struk lewat dialog print bawaan browser (bisa ke printer apa saja, atau simpan sebagai PDF). */
-export function printViaBrowser(transaction: Transaction, store: StoreSettings) {
+export function printViaBrowser(transaction: Transaction, store: StoreSettings, columns: 32 | 42 | 48 = 32) {
+  const paperWidthMm = columnsToPaperWidthMm(columns);
   const date = new Date(transaction.created_at);
   const dateStr = date.toLocaleDateString("sv-SE");
   const timeStr = date.toLocaleTimeString("id-ID", {
@@ -24,6 +33,7 @@ export function printViaBrowser(transaction: Transaction, store: StoreSettings) 
       (item) => `
         <div class="item">
           <div class="item-name">${escapeHtml(item.product_name)}</div>
+          ${item.item_description ? `<div class="item-desc">${escapeHtml(item.item_description)}</div>` : ""}
           <div class="item-line">
             <span>${item.qty} x ${formatRupiah(item.price)}</span>
             <span>${formatRupiah(item.subtotal)}</span>
@@ -81,26 +91,33 @@ export function printViaBrowser(transaction: Transaction, store: StoreSettings) 
   .order-no { margin-top: 8px; font-size: 13px; }
   .item { margin-bottom: 14px; }
   .item-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .item-desc { font-size: 12px; color: #5b6b63; margin-bottom: 3px; line-height: 1.4; }
   .item-line, .totals-line { display: flex; justify-content: space-between; font-size: 14px; }
   .totals-line { padding: 3px 0; }
   .totals-line.grand { font-weight: 700; font-size: 17px; padding-top: 6px; }
   .footer { margin-top: 10px; font-size: 12px; color: #5b6b63; }
   .item-note { font-size: 12px; color: #5b6b63; margin: 8px 0; padding: 6px 8px; background: #f4f8f6; border-radius: 8px; }
 
+  @page {
+    size: ${paperWidthMm}mm auto;
+    margin: 0;
+  }
+
   @media print {
-    html, body { background: #fff; padding: 0; color: #000; }
+    html, body { background: #fff; padding: 0; color: #000; width: ${paperWidthMm}mm; }
     .receipt {
+      width: 100%;
       max-width: 100%;
       box-shadow: none;
       border-radius: 0;
       -webkit-mask-image: none;
       mask-image: none;
-      padding: 8px;
+      padding: 4px 6px;
     }
     .store-name { font-size: 16px; color: #000; }
     .address, .footer { color: #000; }
     hr { border-top: 1px dashed #000; }
-    .item-note { color: #000; }
+    .item-note, .item-desc { color: #000; }
   }
 </style>
 </head>
@@ -141,13 +158,22 @@ export function printViaBrowser(transaction: Transaction, store: StoreSettings) 
 }
 
 /** Cetak struk dapur (item + catatan doang, tanpa harga) lewat dialog print bawaan browser. */
-export function printKitchenReceiptViaBrowser(transaction: Transaction, store: StoreSettings) {
+export function printKitchenReceiptViaBrowser(
+  transaction: Transaction,
+  store: StoreSettings,
+  columns: 32 | 42 | 48 = 32
+) {
+  const paperWidthMm = columnsToPaperWidthMm(columns);
   const date = new Date(transaction.created_at);
   const dateStr = date.toLocaleDateString("sv-SE");
   const timeStr = date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 
   const rows = (transaction.items ?? [])
-    .map((item) => `<div class="k-item">${item.qty}x ${escapeHtml(item.product_name)}</div>`)
+    .map(
+      (item) => `
+        <div class="k-item">${item.qty}x ${escapeHtml(item.product_name)}</div>
+        ${item.item_description ? `<div class="k-desc">${escapeHtml(item.item_description)}</div>` : ""}`
+    )
     .join("");
 
   const html = `<!doctype html>
@@ -161,8 +187,18 @@ export function printKitchenReceiptViaBrowser(transaction: Transaction, store: S
   .center { text-align: center; }
   .title { font-size: 18px; font-weight: 700; }
   hr { border: none; border-top: 1px dashed #000; margin: 8px 0; }
-  .k-item { font-weight: 700; font-size: 16px; padding: 4px 0; }
+  .k-item { font-weight: 700; font-size: 16px; padding: 4px 0 0; }
+  .k-desc { font-size: 13px; padding: 0 0 4px 4px; }
   .note { font-weight: 700; margin-top: 8px; font-size: 14px; }
+
+  @page {
+    size: ${paperWidthMm}mm auto;
+    margin: 0;
+  }
+
+  @media print {
+    html, body { width: ${paperWidthMm}mm; padding: 6px; }
+  }
 </style>
 </head>
 <body>

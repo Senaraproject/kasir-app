@@ -46,7 +46,7 @@ export async function printReceipt(
     mode,
     columns,
     () => buildReceiptBytes(transaction, store, columns),
-    () => printViaBrowser(transaction, store)
+    () => printViaBrowser(transaction, store, columns)
   );
 }
 
@@ -60,6 +60,6 @@ export async function printKitchenReceipt(
     mode,
     columns,
     () => buildKitchenReceiptBytes(transaction, store, columns),
-    () => printKitchenReceiptViaBrowser(transaction, store)
+    () => printKitchenReceiptViaBrowser(transaction, store, columns)
   );
 }
