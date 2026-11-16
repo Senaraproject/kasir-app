@@ -30,6 +30,11 @@ const RICE_OPTION_LABELS: Record<"putih" | "daun_jeruk", string> = {
   daun_jeruk: "Nasi Daun Jeruk",
 };
 
+const DRINK_OPTION_LABELS: Record<"aqua" | "pucuk", string> = {
+  aqua: "Aqua (Air Mineral)",
+  pucuk: "Pucuk (Teh Pucuk)",
+};
+
 function cartItemDisplayName(item: { name: string; hasRiceOption?: boolean; riceOption?: "putih" | "daun_jeruk" }) {
   if (!item.hasRiceOption) return item.name;
   const riceLabel = RICE_OPTION_LABELS[item.riceOption ?? "putih"];
@@ -195,6 +200,39 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         subtotal: item.price * item.qty,
       }));
 
+      // Full Paket (Naslur Komplit) termasuk 1 minuman gratis + kerupuk gratis - dicatat
+      // sebagai baris struk tersendiri (harga 0) biar tetap kecetak & ikut potong stok kalau
+      // suatu saat Aqua/Pucuk/Kerupuk dipindah ke mode lacak stok otomatis.
+      for (const item of cart.items) {
+        if (!item.hasDrinkOption) continue;
+        const drinkName = item.drinkOption === "pucuk" ? "Pucuk" : "Aqua";
+        const drinkProduct = products.find((p) => p.name.toLowerCase() === drinkName.toLowerCase());
+        const kerupukProduct = products.find((p) => p.name.toLowerCase() === "kerupuk");
+
+        if (drinkProduct) {
+          items.push({
+            transaction_id: transaction.id,
+            product_id: drinkProduct.id,
+            product_name: drinkProduct.name,
+            item_description: "Gratis bonus Full Paket",
+            price: 0,
+            qty: item.qty,
+            subtotal: 0,
+          });
+        }
+        if (kerupukProduct) {
+          items.push({
+            transaction_id: transaction.id,
+            product_id: kerupukProduct.id,
+            product_name: kerupukProduct.name,
+            item_description: "Gratis bonus Full Paket",
+            price: 0,
+            qty: item.qty,
+            subtotal: 0,
+          });
+        }
+      }
+
       const { error: itemsError } = await supabase.from("transaction_items").insert(items);
       if (itemsError) throw new Error(itemsError.message);
 
@@ -337,6 +375,11 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                       Pilih Nasi
                     </span>
                   )}
+                  {product.has_drink_option && (
+                    <span className="shrink-0 rounded-full bg-sky-50 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">
+                      +Minum &amp; Kerupuk Gratis
+                    </span>
+                  )}
                 </div>
                 {product.description && (
                   <span className="mb-1.5 line-clamp-3 text-xs leading-snug text-slate-500">
@@ -468,6 +511,25 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                           {opt === "daun_jeruk" && (
                             <span className="ml-1 text-amber-600">+{formatRupiah(RICE_SURCHARGE)}</span>
                           )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {item.hasDrinkOption && (
+                    <div className="flex flex-wrap gap-1.5 pl-0.5">
+                      {(Object.keys(DRINK_OPTION_LABELS) as (keyof typeof DRINK_OPTION_LABELS)[]).map((opt) => (
+                        <button
+                          key={opt}
+                          onClick={() => cart.setDrinkOption(item.productId, opt)}
+                          className={clsx(
+                            "rounded-full border px-2.5 py-1 text-xs font-medium",
+                            (item.drinkOption ?? "aqua") === opt
+                              ? "border-sky-500 bg-sky-50 text-sky-700"
+                              : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                          )}
+                        >
+                          {DRINK_OPTION_LABELS[opt]} (Gratis)
                         </button>
                       ))}
                     </div>

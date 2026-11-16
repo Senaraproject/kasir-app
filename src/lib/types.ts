@@ -51,6 +51,7 @@ export interface Product {
   low_stock_threshold: number;
   track_stock: boolean;
   has_rice_option: boolean;
+  has_drink_option: boolean;
   description: string | null;
   item_type: ItemType;
   image_url: string | null;
@@ -113,6 +114,8 @@ export interface HeldOrder {
     qty: number;
     hasRiceOption?: boolean;
     riceOption?: "putih" | "daun_jeruk";
+    hasDrinkOption?: boolean;
+    drinkOption?: "aqua" | "pucuk";
   }[];
   discount: number;
   note: string | null;
