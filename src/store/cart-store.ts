@@ -11,13 +11,24 @@ export interface CartItem {
   productId: string;
   name: string;
   price: number;
-  /** Harga asli produk sebelum ditambah surcharge nasi daun jeruk. */
+  /** Harga asli produk sebelum ditambah surcharge nasi daun jeruk / dikurangi diskon otomatis. */
   basePrice?: number;
+  /** Diskon otomatis produk ini (persen), mis. diskon spesial Full Paket. */
+  autoDiscountPercent?: number;
   qty: number;
   hasRiceOption?: boolean;
   riceOption?: RiceOption;
   hasDrinkOption?: boolean;
   drinkOption?: DrinkOption;
+}
+
+function computeEffectivePrice(
+  basePrice: number,
+  autoDiscountPercent: number | undefined,
+  riceOption: RiceOption | undefined
+) {
+  const discounted = basePrice * (1 - (autoDiscountPercent ?? 0) / 100);
+  return riceOption === "daun_jeruk" ? discounted + RICE_SURCHARGE : discounted;
 }
 
 export type DiscountType = "amount" | "percent";
@@ -58,17 +69,19 @@ export const useCartStore = create<CartState>((set, get) => ({
           ),
         };
       }
+      const riceOption = product.has_rice_option ? ("putih" as const) : undefined;
       return {
         items: [
           ...state.items,
           {
             productId: product.id,
             name: product.name,
-            price: product.price,
+            price: computeEffectivePrice(product.price, product.auto_discount_percent, riceOption),
             basePrice: product.price,
+            autoDiscountPercent: product.auto_discount_percent,
             qty: 1,
             hasRiceOption: product.has_rice_option,
-            riceOption: product.has_rice_option ? ("putih" as const) : undefined,
+            riceOption,
             hasDrinkOption: product.has_drink_option,
             drinkOption: product.has_drink_option ? ("aqua" as const) : undefined,
           },
@@ -113,7 +126,7 @@ export const useCartStore = create<CartState>((set, get) => ({
           ...i,
           basePrice: base,
           riceOption: option,
-          price: option === "daun_jeruk" ? base + RICE_SURCHARGE : base,
+          price: computeEffectivePrice(base, i.autoDiscountPercent, option),
         };
       }),
     })),

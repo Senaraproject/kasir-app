@@ -190,15 +190,21 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
         throw new Error(trxError?.message ?? "Gagal membuat transaksi");
       }
 
-      const items = cart.items.map((item) => ({
-        transaction_id: transaction.id,
-        product_id: item.productId,
-        product_name: cartItemDisplayName(item),
-        item_description: products.find((p) => p.id === item.productId)?.description ?? null,
-        price: item.price,
-        qty: item.qty,
-        subtotal: item.price * item.qty,
-      }));
+      const items = cart.items.map((item) => {
+        const baseDescription = products.find((p) => p.id === item.productId)?.description ?? null;
+        const discountNote = item.autoDiscountPercent
+          ? `Diskon spesial ${item.autoDiscountPercent}%`
+          : null;
+        return {
+          transaction_id: transaction.id,
+          product_id: item.productId,
+          product_name: cartItemDisplayName(item),
+          item_description: [baseDescription, discountNote].filter(Boolean).join(" - ") || null,
+          price: item.price,
+          qty: item.qty,
+          subtotal: item.price * item.qty,
+        };
+      });
 
       // Full Paket (Naslur Komplit) termasuk 1 minuman gratis + kerupuk gratis - dicatat
       // sebagai baris struk tersendiri (harga 0) biar tetap kecetak & ikut potong stok kalau
@@ -380,15 +386,29 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                       +Minum &amp; Kerupuk Gratis
                     </span>
                   )}
+                  {product.auto_discount_percent > 0 && (
+                    <span className="shrink-0 rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+                      Diskon {product.auto_discount_percent}%
+                    </span>
+                  )}
                 </div>
                 {product.description && (
                   <span className="mb-1.5 line-clamp-3 text-xs leading-snug text-slate-500">
                     {product.description}
                   </span>
                 )}
-                <span className="mt-auto text-sm font-semibold text-blue-600">
-                  {formatRupiah(product.price)}
-                </span>
+                {product.auto_discount_percent > 0 ? (
+                  <span className="mt-auto flex items-baseline gap-1.5">
+                    <span className="text-xs text-slate-400 line-through">{formatRupiah(product.price)}</span>
+                    <span className="text-sm font-semibold text-blue-600">
+                      {formatRupiah(product.price * (1 - product.auto_discount_percent / 100))}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="mt-auto text-sm font-semibold text-blue-600">
+                    {formatRupiah(product.price)}
+                  </span>
+                )}
               </button>
             ))}
             {filteredProducts.length === 0 && (
@@ -469,7 +489,18 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
                   <div className="flex items-center gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-slate-900">{item.name}</p>
-                      <p className="text-xs text-slate-500">{formatRupiah(item.price)}</p>
+                      <p className="flex items-center gap-1.5 text-xs text-slate-500">
+                        {item.autoDiscountPercent ? (
+                          <>
+                            <span className="line-through">{formatRupiah(item.basePrice ?? item.price)}</span>
+                            <span className="font-medium text-red-600">
+                              {formatRupiah(item.price)} (-{item.autoDiscountPercent}%)
+                            </span>
+                          </>
+                        ) : (
+                          formatRupiah(item.price)
+                        )}
+                      </p>
                     </div>
                     <div className="flex items-center gap-1">
                       <button

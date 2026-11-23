@@ -52,6 +52,7 @@ export interface Product {
   track_stock: boolean;
   has_rice_option: boolean;
   has_drink_option: boolean;
+  auto_discount_percent: number;
   description: string | null;
   item_type: ItemType;
   image_url: string | null;
@@ -111,6 +112,7 @@ export interface HeldOrder {
     name: string;
     price: number;
     basePrice?: number;
+    autoDiscountPercent?: number;
     qty: number;
     hasRiceOption?: boolean;
     riceOption?: "putih" | "daun_jeruk";

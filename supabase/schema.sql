@@ -52,6 +52,7 @@ create table if not exists products (
   track_stock boolean not null default false,
   has_rice_option boolean not null default false,
   has_drink_option boolean not null default false,
+  auto_discount_percent numeric(5,2) not null default 0,
   description text,
   item_type text not null default 'default' check (item_type in ('default','addon','paket')),
   image_url text,

@@ -59,6 +59,8 @@ function ProductForm({
     item_type: product?.item_type ?? ("default" as ItemType),
     track_stock: product?.track_stock ?? false,
     has_rice_option: product?.has_rice_option ?? false,
+    has_drink_option: product?.has_drink_option ?? false,
+    auto_discount_percent: product ? String(product.auto_discount_percent) : "0",
     description: product?.description ?? "",
   }));
   const [saving, setSaving] = useState(false);
@@ -79,6 +81,8 @@ function ProductForm({
       item_type: form.item_type,
       track_stock: form.track_stock,
       has_rice_option: form.has_rice_option,
+      has_drink_option: form.has_drink_option,
+      auto_discount_percent: Number(form.auto_discount_percent) || 0,
       description: form.description.trim() || null,
     };
 
@@ -218,6 +222,31 @@ function ProductForm({
         />
         Ada pilihan nasi (Nasi Putih / Nasi Daun Jeruk) saat ditambah ke keranjang
       </label>
+
+      <label className="flex items-center gap-2 text-sm text-slate-700">
+        <input
+          type="checkbox"
+          checked={form.has_drink_option}
+          onChange={(e) => setForm((f) => ({ ...f, has_drink_option: e.target.checked }))}
+          className="h-4 w-4 rounded border-slate-300"
+        />
+        Termasuk 1 minuman gratis (Aqua/Pucuk) + Kerupuk gratis saat ditambah ke keranjang
+      </label>
+
+      <div>
+        <Label>Diskon Otomatis (%)</Label>
+        <Input
+          type="number"
+          min={0}
+          max={100}
+          value={form.auto_discount_percent}
+          onChange={(e) => setForm((f) => ({ ...f, auto_discount_percent: e.target.value }))}
+        />
+        <p className="mt-1 text-xs text-slate-400">
+          Kalau diisi, harga otomatis dipotong persentase ini tiap produk ini ditambah ke
+          keranjang - gak perlu toggle manual, dan tercatat di struk.
+        </p>
+      </div>
 
       <Button type="submit" className="w-full" disabled={saving}>
         {saving ? "Menyimpan..." : "Simpan Produk"}
