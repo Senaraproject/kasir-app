@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Search, Plus, Minus, Trash2, ShoppingCart, User, X, PackageOpen, ShoppingBag } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -49,9 +48,6 @@ interface Props {
 }
 
 export function KasirScreen({ initialProducts, categories, storeSettings, employee }: Props) {
-  const router = useRouter();
-  // Owner gak dipakai buat ngasir di HP - biar fokus admin. Di layar PC tetap bisa.
-  const [checkingOwnerMobile, setCheckingOwnerMobile] = useState(employee.role === "owner");
   const [products, setProducts] = useState(initialProducts);
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState<string | "all">("all");
@@ -83,16 +79,6 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
       .then(({ count }) => setHeldOrdersCount(count ?? 0));
   }, []);
 
-  useEffect(() => {
-    if (employee.role !== "owner") return;
-    Promise.resolve().then(() => {
-      if (window.innerWidth < 768) {
-        router.replace("/riwayat");
-      } else {
-        setCheckingOwnerMobile(false);
-      }
-    });
-  }, [employee.role, router]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
@@ -275,8 +261,6 @@ export function KasirScreen({ initialProducts, categories, storeSettings, employ
       setSubmitting(false);
     }
   }
-
-  if (checkingOwnerMobile) return null;
 
   return (
     <div className="flex h-screen flex-col md:flex-row">

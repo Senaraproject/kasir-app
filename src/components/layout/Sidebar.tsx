@@ -66,13 +66,12 @@ export function Sidebar({
   let mobilePrimary: NavItem[];
   let mobileMore: NavItem[];
   if (role === "owner") {
-    // Owner gak butuh ngasir di HP - Kasir cuma muncul di layar PC, bottom nav fokus admin.
+    // Owner jarang ngasir di HP - bottom nav fokus admin, Kasir tetap ada tapi disembunyiin
+    // ke "Lainnya" (bukan dihilangin total) buat sesekali cek/tes.
     mobilePrimary = OWNER_MOBILE_PRIMARY_HREFS
       .map((href) => items.find((item) => item.href === href))
       .filter((item): item is NavItem => Boolean(item));
-    mobileMore = items.filter(
-      (item) => item.href !== "/kasir" && !OWNER_MOBILE_PRIMARY_HREFS.includes(item.href)
-    );
+    mobileMore = items.filter((item) => !OWNER_MOBILE_PRIMARY_HREFS.includes(item.href));
   } else {
     mobilePrimary = items.slice(0, MOBILE_PRIMARY_COUNT);
     mobileMore = items.slice(MOBILE_PRIMARY_COUNT);
